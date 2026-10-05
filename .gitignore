@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+test-results/
+playwright-report/
+artifacts/
+home-desktop.png
+home-mobile.png
+.env*
+!.env.example
