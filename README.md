@@ -78,7 +78,9 @@ Processing requires modern browser APIs. Text/binary limits and image dimension 
 
 Only the light/dark preference is saved in local storage. Tool inputs stay in page memory. Fonts, icons, libraries, and the regex worker are served with the website; tool processing does not call remote APIs.
 
-Advertisement slots are pre-styled empty spaces in leaderboard, action, and desktop rail dimensions. No ad network or analytics script is enabled. Before enabling third-party services, update the Privacy Policy with the actual provider details, hosting/contact information, retention policies, and any applicable consent controls. The privacy policy currently describes the behavior of the supplied source code and does not invent an operator identity.
+Adsterra native banners and the social bar load once through the shared layout after hydration, so they persist through client-side navigation without duplicate scripts. Every page also has one 300 × 250 banner. Tool pages use their action slot; other pages use the shared layout. The banner uses `public/ads/banner-300x250.html` in a dedicated iframe so its supplied synchronous script and `atOptions` configuration retain normal HTML parser behavior. Unconfigured desktop rail spaces remain reserved for a future 300 × 600 placement.
+
+Advertising makes third-party network requests and may use cookies or other identifiers. The Privacy Policy and local-processing banner disclose this. Tool code does not send inputs to advertising providers, but external scripts operate under browser permissions. Ads are independent of tool functionality. No separate analytics service is enabled. Ad availability depends on Adsterra inventory, account approval, browser settings, and ad blockers. Provider-specific consent requirements must be configured for the site's actual audience and jurisdiction.
 
 ## Verification
 

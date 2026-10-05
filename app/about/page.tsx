@@ -108,6 +108,15 @@ export default function About() {
           elsewhere.
         </p>
       </section>
+      <section className="panel mt-8 p-6 sm:p-8">
+        <h2 className="text-xl font-semibold">Supported by advertising</h2>
+        <p className="muted mt-4">
+          Adsterra advertisements help support free access to the tools. Tool
+          processing stays in your browser, while advertising loads third-party
+          scripts and may use cookies or other identifiers. Our Privacy Policy
+          explains these requests and your browser controls.
+        </p>
+      </section>
       <div className="mt-8 flex flex-wrap items-center gap-4">
         <Link href="/" className="btn">
           Explore all tools <ArrowRight className="h-4 w-4" />

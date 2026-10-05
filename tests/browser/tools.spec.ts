@@ -2,6 +2,9 @@ import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
+import { mockAdsterra } from "./ad-fixture";
+
+test.beforeEach(async ({ page }) => mockAdsterra(page));
 
 const image = async () =>
   sharp({
@@ -113,13 +116,11 @@ test("PDF merge reorders, split selects pages, and image layout exports", async 
   );
   expect(merged.getPageCount()).toBe(3);
   await page.goto("/tools/pdf/split-pdf/");
-  await page
-    .locator('input[type="file"]')
-    .setInputFiles({
-      name: "source.pdf",
-      mimeType: "application/pdf",
-      buffer: await pdfFixture(5),
-    });
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "source.pdf",
+    mimeType: "application/pdf",
+    buffer: await pdfFixture(5),
+  });
   await expect(page.getByLabel(/Page ranges/)).toHaveValue("1-5");
   await page.getByLabel(/Page ranges/).fill("1-3, 5");
   const splitDownload = page.waitForEvent("download");
@@ -212,13 +213,11 @@ test("password, QR with logo, unit and manual currency conversion", async ({
   ).not.toBe(before);
   await page.goto("/tools/generators/qr-code/");
   await expect(page.getByAltText("Generated QR code")).toBeVisible();
-  await page
-    .locator('input[type="file"]')
-    .setInputFiles({
-      name: "logo.png",
-      mimeType: "image/png",
-      buffer: await image(),
-    });
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "logo.png",
+    mimeType: "image/png",
+    buffer: await image(),
+  });
   await expect(page.getByRole("button", { name: "Remove logo" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Download PNG", exact: true }),
@@ -268,13 +267,11 @@ test("tool markup is crawlable and processing makes no upload requests", async (
       (item: { "@type": string }) => item["@type"],
     ),
   ).toEqual(["SoftwareApplication", "HowTo", "FAQPage"]);
-  await page
-    .locator('input[type="file"]')
-    .setInputFiles({
-      name: "private.png",
-      mimeType: "image/png",
-      buffer: await image(),
-    });
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "private.png",
+    mimeType: "image/png",
+    buffer: await image(),
+  });
   await page
     .getByRole("button", { name: "Convert images", exact: true })
     .click();

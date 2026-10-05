@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { SiteChrome } from "@/components/SiteChrome";
-import { AdSlot } from "@/components/AdSlot";
+import { AdsterraAds } from "@/components/AdsterraAds";
 import { siteUrl } from "@/lib/catalog";
 import "./globals.css";
 
@@ -41,8 +41,8 @@ export default function RootLayout({
           <div className="sticky top-[76px] z-20 flex min-h-[38px] items-center justify-center gap-2 border-b border-emerald-100 bg-emerald-50/95 px-4 py-2 text-center text-[10px] font-medium leading-4 text-emerald-800 backdrop-blur-md dark:border-emerald-900/30 dark:bg-emerald-950/90 dark:text-emerald-300 sm:text-xs">
             <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
             <span>
-              🔒 100% Private — All files are processed locally in your browser
-              and never uploaded to any server.
+              🔒 Local processing — Our tools process files in your browser
+              without uploading them. Third-party ads load separately.
             </span>
           </div>
           <main
@@ -50,9 +50,7 @@ export default function RootLayout({
             className="mx-auto max-w-[1600px] px-5 pb-8 pt-7 sm:px-8 xl:px-10"
           >
             {children}
-            <div className="mt-10">
-              <AdSlot type="leaderboard" />
-            </div>
+            <AdsterraAds />
           </main>
           <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-6 py-6 text-xs text-slate-500 dark:border-slate-800 sm:px-10">
             <span>

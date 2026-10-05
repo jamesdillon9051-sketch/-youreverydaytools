@@ -4,7 +4,7 @@ import { createMetadata } from "@/components/SEOHeader";
 
 export const metadata = createMetadata(
   "Privacy Policy",
-  "Learn how LocalTools processes files locally, stores your theme preference, and handles hosting and advertisement spaces.",
+  "Learn how LocalTools processes files locally, stores theme preferences, and uses Hostinger hosting and Adsterra advertising.",
   "/privacy-policy/",
 );
 
@@ -54,8 +54,9 @@ export default function PrivacyPolicy() {
               localtools-theme
             </code>
             . It is used only to restore your chosen appearance. You can remove
-            it by clearing this site’s browser storage. The application does not
-            set tracking cookies.
+            it by clearing this site’s browser storage. Our tool code does not
+            set tracking cookies. Third-party advertising may use cookies, local
+            storage, or similar technologies as described below.
           </p>
           <p className="muted mt-3">
             Currency reference rates and tool inputs are not saved to local
@@ -84,14 +85,38 @@ export default function PrivacyPolicy() {
         <section>
           <h2 className="text-lg font-semibold">Analytics and advertising</h2>
           <p className="muted mt-3">
-            This version does not integrate analytics, advertising scripts, or
-            third-party trackers. Areas labeled “Advertisement” are empty layout
-            spaces and do not load ad networks.
+            LocalTools displays Adsterra native banners, a social bar, and 300 ×
+            250 banner advertisements across the website. Your browser loads
+            advertising scripts from disembroildisembroildissipatespots.com and
+            may contact additional domains used by Adsterra or its advertising
+            partners. These requests can disclose your IP address, browser and
+            device information, referring page, request times, and advertising
+            interactions.
           </p>
           <p className="muted mt-3">
-            If advertising or analytics services are introduced, this policy
-            must be updated to identify the providers, data collection, and
-            applicable consent controls before those services are enabled.
+            Advertising providers may use cookies, browser storage, or similar
+            identifiers to deliver ads, measure performance, and prevent fraud.
+            Third-party scripts run in your browser under the permissions your
+            browser allows; local tool processing does not make advertising
+            requests private. We do not send your selected files or tool inputs
+            to Adsterra through our tool code. Adsterra’s own data handling and
+            retention are governed by its{" "}
+            <a
+              href="https://adsterra.com/privacy-policy/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-violet-600 underline underline-offset-4 dark:text-violet-400"
+            >
+              Privacy Policy
+            </a>
+            .
+          </p>
+          <p className="muted mt-3">
+            You can manage cookies and third-party storage through your browser
+            settings or block advertising scripts. The tools do not depend on
+            ads being available. Advertiser links lead to external websites with
+            their own privacy policies. We do not integrate a separate analytics
+            service.
           </p>
         </section>
         <section>

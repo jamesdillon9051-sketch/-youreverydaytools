@@ -1,4 +1,7 @@
+import { AdsterraBanner } from "./AdsterraBanner";
+
 export function AdSlot({ type }: { type: "leaderboard" | "rail" | "action" }) {
+  if (type === "action") return <AdsterraBanner />;
   const sizes = {
     leaderboard: "h-[50px] w-[320px] sm:h-[90px] sm:w-[728px] max-w-full",
     rail: "h-[600px] w-[300px]",
@@ -13,11 +16,7 @@ export function AdSlot({ type }: { type: "leaderboard" | "rail" | "action" }) {
         Advertisement
       </span>
       <span className="text-[10px] text-slate-400">
-        {type === "leaderboard"
-          ? "728 × 90 · 320 × 50"
-          : type === "rail"
-            ? "300 × 600"
-            : "300 × 250"}
+        {type === "leaderboard" ? "728 × 90 · 320 × 50" : "300 × 600"}
       </span>
     </aside>
   );
