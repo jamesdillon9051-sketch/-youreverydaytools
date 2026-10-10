@@ -103,7 +103,7 @@ jobs:
           else
             git checkout --orphan hostinger
           fi
-          git rm -r --ignore-unmatch -- .
+          git rm -rf --ignore-unmatch -- .
           cp -a "$RUNNER_TEMP/static-website/." .
           git add --all
           if ! git diff --cached --quiet; then
