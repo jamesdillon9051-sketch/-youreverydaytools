@@ -71,6 +71,7 @@ test("compiled branch publication creates, updates, and preserves unchanged buil
     };
 
     publish();
+    git(["--git-dir", remote, "merge-base", "--is-ancestor", main, "hostinger"]);
     assert.equal(
       git(["--git-dir", remote, "show", "hostinger:index.html"]),
       "<h1>First build</h1>",
@@ -98,7 +99,7 @@ test("compiled branch publication creates, updates, and preserves unchanged buil
       "<h1>Second build</h1>",
     );
     assert.equal(
-      git(["--git-dir", remote, "rev-list", "--count", "hostinger"]),
+      git(["--git-dir", remote, "rev-list", "--count", "hostinger", `^${main}`]),
       "2",
     );
 

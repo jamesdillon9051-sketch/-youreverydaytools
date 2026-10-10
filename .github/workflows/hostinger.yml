@@ -101,8 +101,9 @@ jobs:
             git fetch --no-tags origin hostinger
             git checkout --force -B hostinger FETCH_HEAD
           else
-            git checkout --orphan hostinger
+            git checkout -b hostinger
           fi
+          git merge --strategy=ours --no-edit --allow-unrelated-histories "$SOURCE_SHA"
           git rm -rf --ignore-unmatch -- .
           cp -a "$RUNNER_TEMP/static-website/." .
           git add --all
