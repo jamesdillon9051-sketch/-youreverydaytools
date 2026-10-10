@@ -20,7 +20,7 @@ The upload-ready Hostinger ZIP is an alternative to Git deployment: extract its 
 
 The included `.github/workflows/hostinger.yml` runs on changes to `main`, pull requests, and manual requests from the Actions tab. It uses Node.js 24, installs the lockfile dependencies, runs the calculation tests, and builds the complete Next.js static export. TypeScript is checked during the build.
 
-Successful builds on `main` publish the compiled `hostinger` branch. They also upload `out/` over verified FTPS when all four FTP secrets are configured. Pull requests only test and build; they cannot publish. No application backend is introduced. GitHub performs the build, and Hostinger serves static files.
+Successful builds on `main` publish the compiled `hostinger` branch. They also upload `out/` over verified FTPS when all four FTP secrets are configured. Pull requests only test and build; they cannot publish. GitHub builds the static frontend; Hostinger serves it and runs the standalone PHP social download gateway. The original 15 utilities remain browser-only. See [social service activation](social-downloaders.md) for private API configuration.
 
 ## Optional direct FTPS deployment
 

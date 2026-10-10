@@ -23,7 +23,7 @@ export function createMetadata(
           url: absoluteUrl("/og.png"),
           width: 1200,
           height: 630,
-          alt: "LocalTools — everyday tools, entirely in your browser",
+          alt: "LocalTools — everyday utilities and public social downloaders",
         },
       ],
     },

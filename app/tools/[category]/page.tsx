@@ -19,7 +19,9 @@ export async function generateMetadata({
   if (!category) return {};
   return createMetadata(
     `Free ${category.name} online`,
-    `Free, private ${category.name.toLowerCase()} that run entirely in your browser. ${category.description}`,
+    slug === "social"
+      ? category.description
+      : `Free, private ${category.name.toLowerCase()} that run entirely in your browser. ${category.description}`,
     `/tools/${slug}/`,
     tools
       .filter((tool) => tool.category === slug)
@@ -42,8 +44,12 @@ export default async function CategoryPage({
         path={`/tools/${slug}/`}
         steps={[
           "Choose a tool from this category.",
-          "Enter your data or select local files.",
-          "Process and save the result locally.",
+          slug === "social"
+            ? "Paste a supported public social link or username."
+            : "Enter your data or select local files.",
+          slug === "social"
+            ? "Retrieve available public media and download your selection."
+            : "Process and save the result locally.",
         ]}
       />
       <p className="mb-8 text-xs text-slate-400">
@@ -61,7 +67,10 @@ export default async function CategoryPage({
         Free {category.name.toLowerCase()} online
       </h1>
       <p className="muted mt-3">
-        {category.description} Your data stays on your device.
+        {category.description}{" "}
+        {slug === "social"
+          ? "Public links are processed by our download service and an external data provider."
+          : "Your data stays on your device."}
       </p>
       <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {tools
@@ -85,8 +94,9 @@ export default async function CategoryPage({
             Are these tools free and private?
           </summary>
           <p className="muted mt-3">
-            Yes. All computations run in your browser without uploading your
-            files. Practical file sizes depend on your device memory.
+            {slug === "social"
+              ? "Social tools require an active provider service and send the requested public URL or username to that service. Public availability and usage limits apply."
+              : "Yes. All computations run in your browser without uploading your files. Practical file sizes depend on your device memory."}
           </p>
         </details>
       </section>

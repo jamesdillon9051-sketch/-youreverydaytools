@@ -38,6 +38,14 @@ export const categories = [
     color: "blue",
     icon: "sparkles",
   },
+  {
+    slug: "social",
+    name: "Social downloaders",
+    description:
+      "Save supported public photos, videos, stories, and profile pictures.",
+    color: "sky",
+    icon: "download",
+  },
 ] as const;
 export type CategorySlug = (typeof categories)[number]["slug"];
 export type Tool = {
@@ -518,6 +526,405 @@ export const tools: Tool[] = [
         question: "What is the difference between MB and MiB?",
         answer:
           "One MB is 1,000,000 bytes; one MiB is 1,048,576 bytes. Both decimal and binary data units are supported.",
+      },
+    ],
+  },
+  {
+    slug: "tiktok-downloader",
+    category: "social",
+    name: "TikTok downloader",
+    icon: "download",
+    title: "Download TikTok videos and photos from public links",
+    description:
+      "Find downloadable TikTok videos and photo slideshows from public links. Choose returned media and save individual files or a ZIP.",
+    keywords: ["tiktok video downloader", "public social media downloader"],
+    features: [
+      "Public videos & photos",
+      "Individual & ZIP downloads",
+      "Public links only",
+    ],
+    steps: [
+      "Copy a public post link from the platform and paste it above.",
+      "Find available media; choose a highlight if shown.",
+      "Select files and download them individually or as a ZIP.",
+    ],
+    faq: [
+      {
+        question: "Are private or expired posts supported?",
+        answer:
+          "No. This tool retrieves only media returned by the provider for supported public links. Private accounts, expired stories, deleted posts, and platform restrictions can prevent downloads.",
+      },
+      {
+        question: "Is this processed entirely in my browser?",
+        answer:
+          "Social downloaders use a server gateway and an external data provider. Your link or username is sent to those services. Image, PDF, developer, calculator, and generator tools still process inputs locally.",
+      },
+      {
+        question: "Why might the downloader be unavailable?",
+        answer:
+          "The site operator must activate the provider service. Account credit limits, platform changes, usage limits, or unavailable public media can temporarily prevent downloads.",
+      },
+      {
+        question: "What quality and file limits apply?",
+        answer:
+          "The tool selects the highest-quality supported variant returned by the provider. Individual downloads are limited to 128 MB; a ZIP supports up to 30 files and 64 MB. Audio and watermarks depend on the returned source.",
+      },
+    ],
+  },
+  {
+    slug: "instagram-downloader",
+    category: "social",
+    name: "Instagram downloader",
+    icon: "download",
+    title: "Download Instagram reels, videos and photos online",
+    description:
+      "Save available photos, reels, videos, and carousel images from public Instagram posts. Preview results and download selected media.",
+    keywords: [
+      "instagram reels and photos downloader",
+      "public social media downloader",
+    ],
+    features: [
+      "Reels & carousel photos",
+      "Individual & ZIP downloads",
+      "Public links only",
+    ],
+    steps: [
+      "Copy a public post link from the platform and paste it above.",
+      "Find available media; choose a highlight if shown.",
+      "Select files and download them individually or as a ZIP.",
+    ],
+    faq: [
+      {
+        question: "Are private or expired posts supported?",
+        answer:
+          "No. This tool retrieves only media returned by the provider for supported public links. Private accounts, expired stories, deleted posts, and platform restrictions can prevent downloads.",
+      },
+      {
+        question: "Is this processed entirely in my browser?",
+        answer:
+          "Social downloaders use a server gateway and an external data provider. Your link or username is sent to those services. Image, PDF, developer, calculator, and generator tools still process inputs locally.",
+      },
+      {
+        question: "Why might the downloader be unavailable?",
+        answer:
+          "The site operator must activate the provider service. Account credit limits, platform changes, usage limits, or unavailable public media can temporarily prevent downloads.",
+      },
+      {
+        question: "What quality and file limits apply?",
+        answer:
+          "The tool selects the highest-quality supported variant returned by the provider. Individual downloads are limited to 128 MB; a ZIP supports up to 30 files and 64 MB. Audio and watermarks depend on the returned source.",
+      },
+    ],
+  },
+  {
+    slug: "instagram-stories",
+    category: "social",
+    name: "Instagram stories",
+    icon: "download",
+    title: "Download active Instagram stories from public accounts",
+    description:
+      "Find active, publicly accessible Instagram stories by username. Download available photos and videos before their links expire.",
+    keywords: ["instagram story downloader", "public social media downloader"],
+    features: [
+      "Active public stories",
+      "Individual & ZIP downloads",
+      "Public links only",
+    ],
+    steps: [
+      "Enter a public username or Instagram profile link.",
+      "Find available media; choose a highlight if shown.",
+      "Select files and download them individually or as a ZIP.",
+    ],
+    faq: [
+      {
+        question: "Are private or expired posts supported?",
+        answer:
+          "No. This tool retrieves only media returned by the provider for supported public links. Private accounts, expired stories, deleted posts, and platform restrictions can prevent downloads.",
+      },
+      {
+        question: "Is this processed entirely in my browser?",
+        answer:
+          "Social downloaders use a server gateway and an external data provider. Your link or username is sent to those services. Image, PDF, developer, calculator, and generator tools still process inputs locally.",
+      },
+      {
+        question: "Why might the downloader be unavailable?",
+        answer:
+          "The site operator must activate the provider service. Account credit limits, platform changes, usage limits, or unavailable public media can temporarily prevent downloads.",
+      },
+      {
+        question: "What quality and file limits apply?",
+        answer:
+          "The tool selects the highest-quality supported variant returned by the provider. Individual downloads are limited to 128 MB; a ZIP supports up to 30 files and 64 MB. Audio and watermarks depend on the returned source.",
+      },
+    ],
+  },
+  {
+    slug: "instagram-highlights",
+    category: "social",
+    name: "Instagram highlights",
+    icon: "download",
+    title: "Download Instagram highlights photos and videos",
+    description:
+      "Browse available highlights on a public Instagram account or paste a highlight link. Save returned story photos and videos individually or as a ZIP.",
+    keywords: [
+      "instagram highlights downloader",
+      "public social media downloader",
+    ],
+    features: [
+      "Highlight selection",
+      "Individual & ZIP downloads",
+      "Public links only",
+    ],
+    steps: [
+      "Enter a public username or an Instagram highlight link.",
+      "Find available media; choose a highlight if shown.",
+      "Select files and download them individually or as a ZIP.",
+    ],
+    faq: [
+      {
+        question: "Are private or expired posts supported?",
+        answer:
+          "No. This tool retrieves only media returned by the provider for supported public links. Private accounts, expired stories, deleted posts, and platform restrictions can prevent downloads.",
+      },
+      {
+        question: "Is this processed entirely in my browser?",
+        answer:
+          "Social downloaders use a server gateway and an external data provider. Your link or username is sent to those services. Image, PDF, developer, calculator, and generator tools still process inputs locally.",
+      },
+      {
+        question: "Why might the downloader be unavailable?",
+        answer:
+          "The site operator must activate the provider service. Account credit limits, platform changes, usage limits, or unavailable public media can temporarily prevent downloads.",
+      },
+      {
+        question: "What quality and file limits apply?",
+        answer:
+          "The tool selects the highest-quality supported variant returned by the provider. Individual downloads are limited to 128 MB; a ZIP supports up to 30 files and 64 MB. Audio and watermarks depend on the returned source.",
+      },
+    ],
+  },
+  {
+    slug: "twitter-downloader",
+    category: "social",
+    name: "X / Twitter downloader",
+    icon: "download",
+    title: "Download X Twitter videos, GIFs and photos online",
+    description:
+      "Save photos, MP4 videos, and supported animated GIF videos from public X or Twitter posts. Select individual media or download a ZIP.",
+    keywords: [
+      "x twitter video and photo downloader",
+      "public social media downloader",
+    ],
+    features: [
+      "Photos & MP4 variants",
+      "Individual & ZIP downloads",
+      "Public links only",
+    ],
+    steps: [
+      "Copy a public post link from the platform and paste it above.",
+      "Find available media; choose a highlight if shown.",
+      "Select files and download them individually or as a ZIP.",
+    ],
+    faq: [
+      {
+        question: "Are private or expired posts supported?",
+        answer:
+          "No. This tool retrieves only media returned by the provider for supported public links. Private accounts, expired stories, deleted posts, and platform restrictions can prevent downloads.",
+      },
+      {
+        question: "Is this processed entirely in my browser?",
+        answer:
+          "Social downloaders use a server gateway and an external data provider. Your link or username is sent to those services. Image, PDF, developer, calculator, and generator tools still process inputs locally.",
+      },
+      {
+        question: "Why might the downloader be unavailable?",
+        answer:
+          "The site operator must activate the provider service. Account credit limits, platform changes, usage limits, or unavailable public media can temporarily prevent downloads.",
+      },
+      {
+        question: "What quality and file limits apply?",
+        answer:
+          "The tool selects the highest-quality supported variant returned by the provider. Individual downloads are limited to 128 MB; a ZIP supports up to 30 files and 64 MB. Audio and watermarks depend on the returned source.",
+      },
+    ],
+  },
+  {
+    slug: "facebook-downloader",
+    category: "social",
+    name: "Facebook downloader",
+    icon: "download",
+    title: "Download public Facebook videos, reels and photos",
+    description:
+      "Find available public Facebook reels, videos, and supported post photos. Download the best MP4 or image returned by the provider.",
+    keywords: [
+      "facebook reels video and photo downloader",
+      "public social media downloader",
+    ],
+    features: [
+      "Public reels & posts",
+      "Individual & ZIP downloads",
+      "Public links only",
+    ],
+    steps: [
+      "Copy a public post link from the platform and paste it above.",
+      "Find available media; choose a highlight if shown.",
+      "Select files and download them individually or as a ZIP.",
+    ],
+    faq: [
+      {
+        question: "Are private or expired posts supported?",
+        answer:
+          "No. This tool retrieves only media returned by the provider for supported public links. Private accounts, expired stories, deleted posts, and platform restrictions can prevent downloads.",
+      },
+      {
+        question: "Is this processed entirely in my browser?",
+        answer:
+          "Social downloaders use a server gateway and an external data provider. Your link or username is sent to those services. Image, PDF, developer, calculator, and generator tools still process inputs locally.",
+      },
+      {
+        question: "Why might the downloader be unavailable?",
+        answer:
+          "The site operator must activate the provider service. Account credit limits, platform changes, usage limits, or unavailable public media can temporarily prevent downloads.",
+      },
+      {
+        question: "What quality and file limits apply?",
+        answer:
+          "The tool selects the highest-quality supported variant returned by the provider. Individual downloads are limited to 128 MB; a ZIP supports up to 30 files and 64 MB. Audio and watermarks depend on the returned source.",
+      },
+    ],
+  },
+  {
+    slug: "pinterest-downloader",
+    category: "social",
+    name: "Pinterest downloader",
+    icon: "download",
+    title: "Download Pinterest pin photos and videos online",
+    description:
+      "Save original-size images and supported MP4 videos from public Pinterest pins. Paste a pin link and download the available media.",
+    keywords: [
+      "pinterest image and video downloader",
+      "public social media downloader",
+    ],
+    features: [
+      "Pin images & videos",
+      "Individual & ZIP downloads",
+      "Public links only",
+    ],
+    steps: [
+      "Copy a public post link from the platform and paste it above.",
+      "Find available media; choose a highlight if shown.",
+      "Select files and download them individually or as a ZIP.",
+    ],
+    faq: [
+      {
+        question: "Are private or expired posts supported?",
+        answer:
+          "No. This tool retrieves only media returned by the provider for supported public links. Private accounts, expired stories, deleted posts, and platform restrictions can prevent downloads.",
+      },
+      {
+        question: "Is this processed entirely in my browser?",
+        answer:
+          "Social downloaders use a server gateway and an external data provider. Your link or username is sent to those services. Image, PDF, developer, calculator, and generator tools still process inputs locally.",
+      },
+      {
+        question: "Why might the downloader be unavailable?",
+        answer:
+          "The site operator must activate the provider service. Account credit limits, platform changes, usage limits, or unavailable public media can temporarily prevent downloads.",
+      },
+      {
+        question: "What quality and file limits apply?",
+        answer:
+          "The tool selects the highest-quality supported variant returned by the provider. Individual downloads are limited to 128 MB; a ZIP supports up to 30 files and 64 MB. Audio and watermarks depend on the returned source.",
+      },
+    ],
+  },
+  {
+    slug: "reddit-downloader",
+    category: "social",
+    name: "Reddit downloader",
+    icon: "download",
+    title: "Download Reddit videos, gallery photos and images",
+    description:
+      "Save public Reddit gallery images and hosted videos. Reddit video downloads may lack audio when it is supplied as a separate track.",
+    keywords: [
+      "reddit video and image downloader",
+      "public social media downloader",
+    ],
+    features: [
+      "Reddit galleries & video",
+      "Individual & ZIP downloads",
+      "Public links only",
+    ],
+    steps: [
+      "Copy a public post link from the platform and paste it above.",
+      "Find available media; choose a highlight if shown.",
+      "Select files and download them individually or as a ZIP.",
+    ],
+    faq: [
+      {
+        question: "Are private or expired posts supported?",
+        answer:
+          "No. This tool retrieves only media returned by the provider for supported public links. Private accounts, expired stories, deleted posts, and platform restrictions can prevent downloads.",
+      },
+      {
+        question: "Is this processed entirely in my browser?",
+        answer:
+          "Social downloaders use a server gateway and an external data provider. Your link or username is sent to those services. Image, PDF, developer, calculator, and generator tools still process inputs locally.",
+      },
+      {
+        question: "Why might the downloader be unavailable?",
+        answer:
+          "The site operator must activate the provider service. Account credit limits, platform changes, usage limits, or unavailable public media can temporarily prevent downloads.",
+      },
+      {
+        question: "What quality and file limits apply?",
+        answer:
+          "The tool selects the highest-quality supported variant returned by the provider. Individual downloads are limited to 128 MB; a ZIP supports up to 30 files and 64 MB. Audio and watermarks depend on the returned source.",
+      },
+    ],
+  },
+  {
+    slug: "profile-picture-downloader",
+    category: "social",
+    name: "Profile picture downloader",
+    icon: "download",
+    title: "Download Instagram, TikTok and X profile pictures",
+    description:
+      "Save available profile pictures from public Instagram, TikTok, and X accounts. Enter a username or profile link and choose your platform.",
+    keywords: [
+      "instagram tiktok twitter pfp downloader",
+      "public social media downloader",
+    ],
+    features: [
+      "Three supported platforms",
+      "Individual & ZIP downloads",
+      "Public links only",
+    ],
+    steps: [
+      "Choose the platform and enter a public username or profile link.",
+      "Find available media; choose a highlight if shown.",
+      "Select files and download them individually or as a ZIP.",
+    ],
+    faq: [
+      {
+        question: "Are private or expired posts supported?",
+        answer:
+          "No. This tool retrieves only media returned by the provider for supported public links. Private accounts, expired stories, deleted posts, and platform restrictions can prevent downloads.",
+      },
+      {
+        question: "Is this processed entirely in my browser?",
+        answer:
+          "Social downloaders use a server gateway and an external data provider. Your link or username is sent to those services. Image, PDF, developer, calculator, and generator tools still process inputs locally.",
+      },
+      {
+        question: "Why might the downloader be unavailable?",
+        answer:
+          "The site operator must activate the provider service. Account credit limits, platform changes, usage limits, or unavailable public media can temporarily prevent downloads.",
+      },
+      {
+        question: "What quality and file limits apply?",
+        answer:
+          "The tool selects the highest-quality supported variant returned by the provider. Individual downloads are limited to 128 MB; a ZIP supports up to 30 files and 64 MB. Audio and watermarks depend on the returned source.",
       },
     ],
   },

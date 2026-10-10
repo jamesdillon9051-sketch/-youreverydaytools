@@ -1,3 +1,4 @@
+import { tools } from "../../lib/catalog";
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
@@ -26,7 +27,7 @@ test("directory, theme, search, mobile navigation, and information pages", async
 }) => {
   await page.goto("/");
   await expect(page.locator("h1")).toHaveCount(1);
-  await expect(page.locator("#all-tools h3")).toHaveCount(15);
+  await expect(page.locator("#all-tools h3")).toHaveCount(tools.length);
   await page.getByRole("button", { name: "Switch to dark mode" }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
   await page.reload();

@@ -13,9 +13,9 @@ import { ToolDirectory } from "@/components/ToolDirectory";
 import { ToolIcon, categoryColors } from "@/components/Icons";
 import { categories } from "@/lib/catalog";
 
-const title = "Free online tools, entirely in your browser";
+const title = "Free online tools and public social media downloaders";
 const description =
-  "15 free, private tools for images, PDFs, developers, calculators, and generators. Get everyday tasks done fast with no uploads or sign-up.";
+  "Free tools for images, PDFs, JSON, calculators, generators, and public social media downloads. Everyday tasks made simple, with no sign-up.";
 export const metadata = createMetadata(title, description, "/");
 
 export default function Home() {
@@ -57,7 +57,8 @@ export default function Home() {
           </h1>
           <p className="mt-5 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
             Your everyday toolkit for files, code, and everything in between.
-            Free, fast, and private — right in your browser.
+            Local file processing, useful calculators, and public social
+            downloads.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <a href="#all-tools" className="btn">
@@ -93,12 +94,12 @@ export default function Home() {
           {
             icon: ShieldCheck,
             title: "Private by default",
-            text: "Your files never leave your device.",
+            text: "Core file tools process on your device.",
           },
           {
             icon: Zap,
             title: "Built for speed",
-            text: "No uploads. No waiting in line.",
+            text: "Lightweight pages. Clear controls.",
           },
           {
             icon: Globe,
@@ -155,8 +156,9 @@ export default function Home() {
           <details className="mt-4 text-sm">
             <summary className="font-medium">Do I need an account?</summary>
             <p className="muted mt-2">
-              No. Every tool is free and works without an account. Processing
-              happens entirely in your browser.
+              No. No site account is needed. Core utilities process locally;
+              social downloaders need an internet connection and an active
+              provider service.
             </p>
           </details>
           <details className="mt-4 text-sm">
@@ -164,9 +166,9 @@ export default function Home() {
               Do these tools work offline?
             </summary>
             <p className="muted mt-2">
-              Processing needs no network calls. Load the page and its tool code
-              first; you can then use it without an internet connection. This
-              site is not an installable offline app.
+              Core tools can process locally once their code has loaded. Social
+              downloaders require an internet connection. This site does not
+              guarantee offline navigation.
             </p>
           </details>
         </div>

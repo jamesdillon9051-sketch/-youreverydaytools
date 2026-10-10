@@ -1,6 +1,6 @@
 # LocalTools
 
-A complete Next.js App Router and Tailwind CSS utility suite. All 15 tools process inputs in the browser. The production website is a static export with no Node.js runtime, backend endpoints, remote processing service, or database required.
+A complete Next.js App Router and Tailwind CSS utility suite. The original 15 utilities process inputs in the browser. Nine social downloaders use a standalone PHP gateway on Hostinger shared hosting with external provider APIs. The frontend remains a Next.js static export, with no Node.js runtime or database on Hostinger.
 
 ## Start locally
 
@@ -23,7 +23,7 @@ NEXT_PUBLIC_SITE_URL=https://youreverydaytools.weeklydelight.com npm run build
 
 Alternatively create `.env.local` with `NEXT_PUBLIC_SITE_URL` set to your domain, then run `npm run build`. This source defaults to `https://youreverydaytools.weeklydelight.com`, your supplied Hostinger domain. Set the variable to override that address when moving to another domain.
 
-The generated `out/` folder is the complete website. `npm run start` serves that folder locally. It does not run a processing backend. The build uses webpack for compatibility with restricted build environments.
+The generated `out/` folder is the complete website. `npm run start` serves that folder locally. For social downloaders, serve `out/` on PHP-enabled hosting; the local static server cannot execute PHP. The build uses webpack for compatibility with restricted build environments.
 
 Run `npm run package` after building to generate `artifacts/localtools-hostinger.zip`, `artifacts/localtools-source.zip`, a complete source-code document, and an upload guide. The hosting archive contains the contents of `out/` directly at its root.
 
@@ -45,7 +45,7 @@ Do not upload the source ZIP into `public_html`. Source code, `node_modules`, an
 
 ## Included pages
 
-- Homepage and five category landing pages.
+- Homepage and six category landing pages.
 - Fifteen dedicated tool pages with canonical metadata, OpenGraph PNG cards, SoftwareApplication, HowTo, FAQ JSON-LD, instructions, and related-tool links.
 - About Us (`/about/`) and Privacy Policy (`/privacy-policy/`), linked in the footer and sitemap.
 - Static `robots.txt`, `sitemap.xml`, and custom 404.
@@ -76,7 +76,7 @@ Processing requires modern browser APIs. Text/binary limits and image dimension 
 
 ## Privacy and ads
 
-Only the light/dark preference is saved in local storage. Tool inputs stay in page memory. Fonts, icons, libraries, and the regex worker are served with the website; tool processing does not call remote APIs.
+Only the light/dark preference is saved in local storage. Tool inputs stay in page memory. Fonts, icons, libraries, and the regex worker are served with the website; core utility processing does not call remote APIs. Social downloaders send public links to the PHP gateway and external providers.
 
 Adsterra native banners and the social bar load once through the shared layout after hydration, so they persist through client-side navigation without duplicate scripts. Every page also has one 300 × 250 banner. Tool pages use their action slot; other pages use the shared layout. The banner uses `public/ads/banner-300x250.html` in a dedicated iframe so its supplied synchronous script and `atOptions` configuration retain normal HTML parser behavior. Unconfigured desktop rail spaces remain reserved for a future 300 × 600 placement.
 
@@ -97,3 +97,7 @@ npm run test:browser
 Calculation tests cover page ranges, known growth values, amortization invariants, freelance rates, exact unit factors, Unicode/binary Base64, and password constraints. Browser checks verify the static site, information pages, theme/search, real image and PDF downloads, regex timeout, QR logo export, calculator results, currency rate confirmation, and absence of file upload requests.
 
 `pdf-lib`, `pdfjs-dist`, `browser-image-compression`, `qrcode`, and `lucide-react` are included as requested. PDF manipulation uses `pdf-lib`; the provided tools do not load PDF.js because they do not rasterize PDF pages. Heavy processing libraries load only when their tool needs them.
+
+## Public social downloaders
+
+Nine tools cover TikTok videos/photos, Instagram posts/reels/carousels, active Instagram stories, Instagram highlights, X, Facebook, Pinterest, Reddit, and profile pictures on Instagram/TikTok/X. See [shared-hosting activation and provider setup](docs/social-downloaders.md). They require PHP with cURL and private provider keys. API accounts were not provisioned by this project; until activated the pages show an honest service-unavailable message. Existing core tools remain fully functional.

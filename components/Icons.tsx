@@ -17,6 +17,7 @@ import {
   Scissors,
   Sparkles,
   Calculator,
+  Download,
 } from "lucide-react";
 
 const icons = {
@@ -38,6 +39,7 @@ const icons = {
   arrows: ArrowLeftRight,
   sparkles: Sparkles,
   calculator: Calculator,
+  download: Download,
 };
 export function ToolIcon({
   name,
@@ -50,6 +52,7 @@ export function ToolIcon({
   return <Icon className={className} aria-hidden="true" strokeWidth={1.7} />;
 }
 export const categoryColors: Record<string, string> = {
+  social: "bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400",
   media: "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400",
   pdf: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400",
   developer:

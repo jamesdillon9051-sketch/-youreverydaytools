@@ -6,7 +6,7 @@ import { ToolIcon, categoryColors } from "@/components/Icons";
 
 export const metadata = createMetadata(
   "About Us",
-  "Meet LocalTools: 15 free browser utilities built to make everyday work simpler, with local processing, no accounts, and no uploads.",
+  "Meet LocalTools: useful browser utilities and public social downloaders for everyday work, with local processing for your images and PDFs.",
   "/about/",
 );
 
@@ -33,8 +33,9 @@ export default function About() {
         </p>
         <p className="muted mt-4 max-w-2xl">
           Our approach is simple: useful tools, clear controls, and processing
-          that stays on your device. You can get straight to work without
-          creating an account or uploading your files.
+          that stays on your device for core utilities. Social downloaders use a
+          remote service. You can get straight to work without creating an
+          account or uploading your files.
         </p>
       </div>
       <section className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -42,7 +43,7 @@ export default function About() {
           {
             icon: ShieldCheck,
             title: "Privacy by design",
-            text: "Your files and tool inputs are processed locally using browser APIs. We do not collect them.",
+            text: "Core file and text utilities process locally using browser APIs. Social downloaders forward your public link to a data provider.",
           },
           {
             icon: Zap,
@@ -52,7 +53,7 @@ export default function About() {
           {
             icon: Globe,
             title: "Free essentials",
-            text: "All 15 utilities are available without a subscription. Use them on a modern desktop or mobile browser.",
+            text: "Our tools are available without a site subscription. Use them on a modern desktop or mobile browser.",
           },
         ].map((item) => (
           <div key={item.title} className="panel p-5">
@@ -64,7 +65,7 @@ export default function About() {
       </section>
       <section className="panel mt-8 p-6 sm:p-8">
         <h2 className="text-xl font-semibold">
-          One workspace, five categories
+          One workspace for everyday tasks
         </h2>
         <div className="mt-5 space-y-3">
           {categories.map((category) => (
@@ -103,19 +104,20 @@ export default function About() {
           assumptions.
         </p>
         <p className="muted mt-3">
-          You need a connection to load a page and its code. After those assets
-          load, processing uses your browser without sending your inputs
-          elsewhere.
+          You need a connection to load a page and its code. Core tools process
+          locally after loading. Social downloaders require an active provider
+          API and forward public URLs or usernames. Private accounts and expired
+          or restricted media are unsupported.
         </p>
       </section>
       <section className="panel mt-8 p-6 sm:p-8">
         <h2 className="text-xl font-semibold">Supported by advertising</h2>
         <p className="muted mt-4">
-          Adsterra advertisements help support free access to the tools. Tool
-          processing stays in your browser, while advertising loads third-party
-          scripts and may use cookies or other identifiers. We also use Google
-          Analytics to understand site traffic. Our Privacy Policy explains
-          these requests and your browser controls.
+          Adsterra advertisements help support free access to the tools. Core
+          tool processing stays in your browser, while advertising loads
+          third-party scripts and may use cookies or other identifiers. We also
+          use Google Analytics to understand site traffic. Our Privacy Policy
+          explains these requests and your browser controls.
         </p>
       </section>
       <div className="mt-8 flex flex-wrap items-center gap-4">

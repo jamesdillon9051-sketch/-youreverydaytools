@@ -69,7 +69,7 @@ export function SiteChrome() {
       >
         <ToolIcon name="home" /> All tools{" "}
         <span className="ml-auto rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] text-violet-600 dark:bg-violet-900 dark:text-violet-300">
-          15
+          {tools.length}
         </span>
       </Link>
       <p className="mb-3 mt-8 px-3 text-[10px] font-bold uppercase tracking-[.18em] text-slate-400">
@@ -164,8 +164,8 @@ export function SiteChrome() {
           )}
         </div>
         <span className="hidden items-center gap-1.5 text-xs font-medium text-slate-500 xl:flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> All
-          systems local
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ready for
+          everyday work
         </span>
         <button
           onClick={toggleTheme}
@@ -189,12 +189,12 @@ export function SiteChrome() {
           <ShieldCheck className="mb-3 h-6 w-6 text-violet-500" />
           <p className="text-sm font-semibold">Your files. Your device.</p>
           <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-            No uploads. No accounts.
+            Core files stay local.
             <br />
-            Just tools that work for you.
+            Social links use our download service.
           </p>
           <div className="mt-4 flex items-center gap-1.5 text-[10px] font-medium text-violet-600 dark:text-violet-400">
-            <Check className="h-3 w-3" /> Private by design
+            <Check className="h-3 w-3" /> No account required
           </div>
         </div>
         <p className="mt-5 text-center text-[10px] text-slate-400">

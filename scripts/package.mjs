@@ -22,6 +22,9 @@ const websiteFiles = await collect(output);
 if (!websiteFiles.includes(join(output, "index.html")))
   throw new Error("Build the static export before packaging.");
 const websiteEntries = {};
+websiteEntries["SOCIAL-DOWNLOADERS.md"] = new Uint8Array(
+  await readFile(join(root, "docs/social-downloaders.md")),
+);
 for (const file of websiteFiles)
   websiteEntries[relative(output, file)] = new Uint8Array(await readFile(file));
 await writeFile(
@@ -120,7 +123,7 @@ await writeFile(join(artifacts, "FULL-SOURCE.md"), sourceDocument);
 const sitemap = await readFile(join(output, "sitemap.xml"), "utf8");
 const match = sitemap.match(/<loc>(https?:\/\/[^<]+)<\/loc>/);
 const domain = match ? new URL(match[1]).origin : "the configured domain";
-const guide = `# Hostinger upload instructions\n\nConfigured website: **${domain}**\n\n1. Open Hostinger hPanel → Websites → your website → File Manager.\n2. Open the domain's document root, normally \`public_html\`. Back up any existing files first.\n3. Upload \`localtools-hostinger.zip\` and extract it directly into that document root.\n4. Confirm \`index.html\`, \`_next/\`, \`tools/\`, \`about/\`, \`privacy-policy/\`, and \`.htaccess\` are directly inside the document root. Do not create an extra \`out/\` folder.\n5. Enable HTTPS for the domain. Check ${domain}/ and a tool page.\n6. Check ${domain}/sitemap.xml and ${domain}/robots.txt. Submit the sitemap URL in Google Search Console.\n\nThe hosting ZIP includes all 15 tools, five category pages, About Us, Privacy Policy, SEO metadata, structured data, static assets, a custom 404 page, and Apache configuration. No Node.js, database, or processing server is needed on Hostinger.\n\nThe separate \`localtools-source.zip\` is for editing and rebuilding. Keep it outside \`public_html\`. \`FULL-SOURCE.md\` contains the complete directory tree and every source file.\n`;
+const guide = `# Hostinger upload instructions\n\nConfigured website: **${domain}**\n\n1. Open Hostinger hPanel → Websites → your website → File Manager.\n2. Open the domain's document root, normally \`public_html\`. Back up any existing files first.\n3. Upload \`localtools-hostinger.zip\` and extract it directly into that document root.\n4. Confirm \`index.html\`, \`_next/\`, \`tools/\`, \`about/\`, \`privacy-policy/\`, and \`.htaccess\` are directly inside the document root. Do not create an extra \`out/\` folder.\n5. Enable HTTPS for the domain. Check ${domain}/ and a tool page.\n6. Check ${domain}/sitemap.xml and ${domain}/robots.txt. Submit the sitemap URL in Google Search Console.\n\nThe hosting ZIP includes 15 browser utilities, nine social downloaders, six category pages, About Us, Privacy Policy, SEO metadata, structured data, static assets, a custom 404 page, and Apache configuration. No Node.js or database is needed on Hostinger. Social downloaders additionally require PHP with cURL and private provider API keys; see SOCIAL-DOWNLOADERS.md included in the archive. The original 15 utilities require no API configuration.\n\nThe separate \`localtools-source.zip\` is for editing and rebuilding. Keep it outside \`public_html\`. \`FULL-SOURCE.md\` contains the complete directory tree and every source file.\n`;
 await writeFile(join(artifacts, "HOSTINGER-UPLOAD.md"), guide);
 console.log(
   `Created Hostinger ZIP (${websiteFiles.length} files), source ZIP (${sourceFiles.length} files), full source document, and upload guide for ${domain}.`,

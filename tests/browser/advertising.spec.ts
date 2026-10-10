@@ -17,6 +17,7 @@ test("all page types initialize analytics and render one native and rectangular 
     "/tools/developer/",
     "/tools/calculators/",
     "/tools/generators/",
+    "/tools/social/",
     ...tools.map(toolPath),
   ];
   for (const path of paths) {

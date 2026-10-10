@@ -44,7 +44,7 @@ export function ToolWrapper({
               {category.name}
             </span>
             <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
-              Free & private
+              {tool.category === "social" ? "Public media" : "Free & private"}
             </span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -62,7 +62,10 @@ export function ToolWrapper({
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <span className="text-sm font-semibold">{tool.name}</span>
               <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                <ShieldCheck className="h-3.5 w-3.5" /> Local processing
+                <ShieldCheck className="h-3.5 w-3.5" />{" "}
+                {tool.category === "social"
+                  ? "Download service"
+                  : "Local processing"}
               </span>
             </div>
             <div className="p-5 sm:p-7">{children}</div>

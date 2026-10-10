@@ -41,6 +41,13 @@ jobs:
       - name: Verify calculations and encoding
         run: npm test
 
+      - name: Verify shared-hosting PHP gateway
+        run: |
+          php -l public/api/social-lib.php
+          php -l public/api/social.php
+          php -l public/api/social-download.php
+          php tests/social-api.test.php
+
       - name: Build static website and check TypeScript
         run: npm run build
 

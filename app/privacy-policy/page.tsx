@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
       </span>
       <h1 className="mt-5 text-3xl font-bold tracking-tight">Privacy Policy</h1>
       <p className="muted mt-3">
-        Effective October 6, 2026. This policy describes the LocalTools website
+        Effective October 10, 2026. This policy describes the LocalTools website
         as currently implemented.
       </p>
       <div className="panel mt-8 space-y-8 p-6 sm:p-8">
@@ -33,9 +33,9 @@ export default function PrivacyPolicy() {
           <p className="muted mt-3">
             Images, PDFs, text, calculator inputs, generated passwords, and QR
             code content are processed in your browser. LocalTools does not
-            upload these inputs to a server. The application has no backend
-            processing endpoints, account system, or database for your tool
-            inputs.
+            upload these inputs to a server. Core utilities have no remote
+            processing endpoints. Social downloaders use the separate service
+            described below.
           </p>
           <p className="muted mt-3">
             Results stay in page memory until you leave or reload the page,
@@ -43,6 +43,53 @@ export default function PrivacyPolicy() {
             saved according to your browser and device settings. Information you
             copy is placed on your device’s clipboard, which may be accessible
             to other applications according to your operating system settings.
+          </p>
+        </section>
+        <section>
+          <h2 className="text-lg font-semibold">
+            Public social media downloads
+          </h2>
+          <p className="muted mt-3">
+            When you use a social downloader, the pasted public URL or username
+            is sent to our PHP gateway on Hostinger and to Scrape Creators, or
+            RocketAPI for active Instagram stories. These services receive the
+            requested link or username and routine connection metadata. Media
+            downloads pass through our hosting service. Images, PDFs, passwords,
+            and other core utility inputs are not sent through this gateway.
+          </p>
+          <p className="muted mt-3">
+            The gateway does not create accounts or store social post results in
+            a database. Download links expire after 15 minutes. Media is
+            buffered in temporary server files while downloading and removed at
+            request completion. Usage limits store a keyed hash of your IP
+            address and request counts for up to two days in private server
+            storage. Hosting access logs may contain requested addresses and
+            signed download tokens, with retention controlled by Hostinger. The
+            data providers handle their own processing and retention under their
+            policies.
+          </p>
+          <p className="muted mt-3">
+            Use public content you own or have permission to download. We do not
+            request your social platform password or cookies. Private accounts,
+            expired stories, and access restrictions are not bypassed. Visit{" "}
+            <a
+              href="https://scrapecreators.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-violet-600 underline"
+            >
+              Scrape Creators
+            </a>{" "}
+            and{" "}
+            <a
+              href="https://rocketapi.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-violet-600 underline"
+            >
+              RocketAPI
+            </a>{" "}
+            for their current service terms and privacy information.
           </p>
         </section>
         <section>
@@ -79,7 +126,8 @@ export default function PrivacyPolicy() {
           </p>
           <p className="muted mt-3">
             The application bundles its tool libraries and uses system fonts.
-            Tool processing does not require external API calls. Loading another
+            Core utility processing does not require external API calls. Social
+            downloads do require external provider requests. Loading another
             page or an unloaded tool may require additional static assets.
           </p>
         </section>
@@ -168,8 +216,8 @@ export default function PrivacyPolicy() {
           <p className="muted mt-3">
             You can use the tools without creating an account, clear the theme
             preference through browser settings, and close a page to discard its
-            in-memory inputs. We have no uploaded tool data to retrieve or
-            delete.
+            in-memory inputs. Core file inputs are not uploaded. Social download
+            data and hosting logs are handled as described above.
           </p>
         </section>
         <section>
