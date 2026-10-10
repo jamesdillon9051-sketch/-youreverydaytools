@@ -2,11 +2,27 @@
 
 Website: **https://youreverydaytools.weeklydelight.com**
 
+Repository: **https://github.com/jamesdillon9051-sketch/-youreverydaytools**
+
+## Hostinger hPanel Git deployment
+
+Use **main** to edit the source and **hostinger** to deploy the compiled website. Hostinger's shared-hosting Git deployment copies repository files; it does not automatically install npm dependencies or build Next.js. Deploying the source branch therefore leaves the website folder without `index.html` and can produce a 403 response.
+
+1. Wait for **Actions → Build and deploy to Hostinger** to finish its **Update compiled website branch for Hostinger Git** job. It creates or updates the `hostinger` branch with `index.html`, `_next/`, `tools/`, `.htaccess`, and the other built files directly at its root.
+2. In this subdomain's **Hostinger hPanel → Git** deployment settings, use the same repository URL and change the branch from `main` to **hostinger**.
+3. Deploy into this subdomain's actual document root. When the Git deployment screen already targets that document root, leave its extra directory field empty. Do not append `out/` or create a nested project folder.
+4. Click **Deploy**. Check File Manager: `index.html` and `_next/` must be directly inside the folder served by `youreverydaytools.weeklydelight.com`.
+5. Open the homepage, a tool page, `/sitemap.xml`, and `/robots.txt`. If `/index.html` returns 404, the built files have not reached the directory serving this subdomain. If that file exists but is forbidden, check file/folder permissions and the hosting access rules.
+
+Future edits go to `main`. GitHub tests and builds them, then commits the generated website to `hostinger`. Click Deploy after that branch updates, or enable Hostinger's automatic Git deployment and configure its webhook for pushes to this repository. No FTP secrets are needed for the hPanel Git route. Do not edit generated files directly on `hostinger`; the next successful build replaces them.
+
+The upload-ready Hostinger ZIP is an alternative to Git deployment: extract its contents directly into the same document root. It already contains the compiled website.
+
 The included `.github/workflows/hostinger.yml` runs on changes to `main`, pull requests, and manual requests from the Actions tab. It uses Node.js 24, installs the lockfile dependencies, runs the calculation tests, and builds the complete Next.js static export. TypeScript is checked during the build.
 
-Successful builds on `main` upload `out/` to Hostinger with explicit FTPS and certificate validation. Pull requests only test and build; they cannot publish. No application backend is introduced. GitHub performs the build, and Hostinger serves static files.
+Successful builds on `main` publish the compiled `hostinger` branch. They also upload `out/` over verified FTPS when all four FTP secrets are configured. Pull requests only test and build; they cannot publish. No application backend is introduced. GitHub performs the build, and Hostinger serves static files.
 
-## One-time connection
+## Optional direct FTPS deployment
 
 1. Create a GitHub repository with `main` as its default branch. A private repository is suitable.
 2. Push the source project to that repository, including the hidden `.github/` folder. Do not push `out/`, `.next/`, `node_modules/`, credentials, or `.env.local`.
@@ -30,7 +46,7 @@ An optional Actions **variable** named `HOSTINGER_FTP_PORT` overrides port 21. T
 
 1. Edit a file in GitHub and commit it to `main`, or merge a pull request into `main`.
 2. Open **Actions** to watch tests, build, and deployment.
-3. When the workflow succeeds, open your website. HTML updates immediately unless Hostinger/CDN caching is enabled; purge that cache if it still serves an older page.
+3. For hPanel Git, deploy the updated `hostinger` branch or let its configured webhook do so. For configured FTPS, the workflow uploads directly. HTML updates immediately unless Hostinger/CDN caching is enabled; purge that cache if it still serves an older page.
 
 Useful files to edit:
 
@@ -51,4 +67,4 @@ The build artifact includes hidden files so `.htaccess` reaches Hostinger. Deplo
 
 FTP updates are performed file by file, rather than as an atomic release. Retaining older assets reduces broken references during updates. To roll back, revert the offending GitHub commit and let the workflow rebuild and publish the previous source. Back up any pre-existing website before the initial upload.
 
-Missing credentials fail with a message identifying the required secret names. Build/test failures prevent deployment. After an upload, the workflow verifies that the homepage and sitemap respond successfully over HTTPS. Website SSL and DNS remain configured in Hostinger.
+Missing FTP secrets skip only direct FTPS deployment; the compiled branch is still published. Invalid configured credentials fail the FTPS job. Build/test failures prevent both publication methods. After an FTPS upload, the workflow verifies that the homepage and sitemap respond successfully over HTTPS. The branch publication job cannot access your hPanel settings and does not itself upload hosting files. Website SSL and DNS remain configured in Hostinger.

@@ -29,7 +29,7 @@ Run `npm run package` after building to generate `artifacts/localtools-hostinger
 
 ## Upload to Hostinger
 
-For automatic updates from GitHub, follow [GitHub → Hostinger deployment](docs/GITHUB-HOSTINGER.md). The included workflow builds and publishes on each successful commit to `main` after the four Hostinger FTP secrets are configured in GitHub.
+For updates from GitHub, follow [GitHub → Hostinger deployment](docs/GITHUB-HOSTINGER.md). Edit the source on `main`. The workflow builds each successful change and publishes a compiled `hostinger` branch. In Hostinger hPanel's Git section, deploy **hostinger**, with its files directly in this subdomain's document root. The `main` source branch has no built `index.html` and cannot be served directly by shared hosting. For automatic updates, configure Hostinger's Git deployment webhook, or use the optional direct FTPS upload with the four documented GitHub secrets.
 
 1. Build with your real domain as described above, or use a Hostinger ZIP already configured for that domain.
 2. In Hostinger hPanel, open Websites → your website → File Manager → `public_html`.
@@ -80,7 +80,9 @@ Only the light/dark preference is saved in local storage. Tool inputs stay in pa
 
 Adsterra native banners and the social bar load once through the shared layout after hydration, so they persist through client-side navigation without duplicate scripts. Every page also has one 300 × 250 banner. Tool pages use their action slot; other pages use the shared layout. The banner uses `public/ads/banner-300x250.html` in a dedicated iframe so its supplied synchronous script and `atOptions` configuration retain normal HTML parser behavior. Unconfigured desktop rail spaces remain reserved for a future 300 × 600 placement.
 
-Advertising makes third-party network requests and may use cookies or other identifiers. The Privacy Policy and local-processing banner disclose this. Tool code does not send inputs to advertising providers, but external scripts operate under browser permissions. Ads are independent of tool functionality. No separate analytics service is enabled. Ad availability depends on Adsterra inventory, account approval, browser settings, and ad blockers. Provider-specific consent requirements must be configured for the site's actual audience and jurisdiction.
+Advertising makes third-party network requests and may use cookies or other identifiers. The Privacy Policy and local-processing banner disclose this. Tool code does not send inputs to advertising providers, but external scripts operate under browser permissions. Ads are independent of tool functionality. Ad availability depends on Adsterra inventory, account approval, browser settings, and ad blockers. Provider-specific consent requirements must be configured for the site's actual audience and jurisdiction.
+
+Google Analytics 4 uses measurement ID `G-8SNLQK3R0B`. The shared layout includes the supplied async Google tag and initialization code in the head of every content page, with one instance per document. Google Analytics Enhanced Measurement can track client-side history navigation when its page-view history option is enabled in the property's web stream settings. This implementation does not add duplicate manual page-view events. Google controls the loaded tag; verify receipt in Analytics Realtime or Tag Assistant after uploading the site. Tool inputs are not passed to analytics by application code. Browser tests mock third-party scripts to avoid reporting test traffic to the live property.
 
 ## Verification
 

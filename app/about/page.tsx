@@ -113,8 +113,9 @@ export default function About() {
         <p className="muted mt-4">
           Adsterra advertisements help support free access to the tools. Tool
           processing stays in your browser, while advertising loads third-party
-          scripts and may use cookies or other identifiers. Our Privacy Policy
-          explains these requests and your browser controls.
+          scripts and may use cookies or other identifiers. We also use Google
+          Analytics to understand site traffic. Our Privacy Policy explains
+          these requests and your browser controls.
         </p>
       </section>
       <div className="mt-8 flex flex-wrap items-center gap-4">

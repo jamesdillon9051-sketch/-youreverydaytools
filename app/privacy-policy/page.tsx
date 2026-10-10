@@ -4,7 +4,7 @@ import { createMetadata } from "@/components/SEOHeader";
 
 export const metadata = createMetadata(
   "Privacy Policy",
-  "Learn how LocalTools processes files locally, stores theme preferences, and uses Hostinger hosting and Adsterra advertising.",
+  "Learn how LocalTools processes files locally and uses theme storage, Google Analytics, hosting, and Adsterra advertising.",
   "/privacy-policy/",
 );
 
@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
       </span>
       <h1 className="mt-5 text-3xl font-bold tracking-tight">Privacy Policy</h1>
       <p className="muted mt-3">
-        Effective October 5, 2026. This policy describes the LocalTools website
+        Effective October 6, 2026. This policy describes the LocalTools website
         as currently implemented.
       </p>
       <div className="panel mt-8 space-y-8 p-6 sm:p-8">
@@ -55,8 +55,9 @@ export default function PrivacyPolicy() {
             </code>
             . It is used only to restore your chosen appearance. You can remove
             it by clearing this site’s browser storage. Our tool code does not
-            set tracking cookies. Third-party advertising may use cookies, local
-            storage, or similar technologies as described below.
+            set tracking cookies. Google Analytics and third-party advertising
+            may use cookies, local storage, or similar technologies as described
+            below.
           </p>
           <p className="muted mt-3">
             Currency reference rates and tool inputs are not saved to local
@@ -115,8 +116,44 @@ export default function PrivacyPolicy() {
             You can manage cookies and third-party storage through your browser
             settings or block advertising scripts. The tools do not depend on
             ads being available. Advertiser links lead to external websites with
-            their own privacy policies. We do not integrate a separate analytics
-            service.
+            their own privacy policies.
+          </p>
+          <p className="muted mt-3">
+            We use Google Analytics 4, with measurement ID G-8SNLQK3R0B, to
+            understand website traffic and usage. The Google tag loads from
+            www.googletagmanager.com and sends analytics requests to Google.
+            Depending on the property settings, these requests include page
+            addresses and titles, referring pages, device and browser details,
+            approximate location, and interactions such as page views and
+            scrolling. Google Analytics may set cookies, including _ga cookies,
+            to distinguish visits. Google receives network information when your
+            browser contacts its services.
+          </p>
+          <p className="muted mt-3">
+            Our tools do not deliberately send selected files, text inputs,
+            generated passwords, or calculation values to Google Analytics.
+            Analytics data retention depends on the settings of this website’s
+            Google Analytics property. Google’s handling of data is described in
+            its{" "}
+            <a
+              href="https://policies.google.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-violet-600 underline underline-offset-4 dark:text-violet-400"
+            >
+              Privacy Policy
+            </a>
+            . You can block analytics scripts or cookies through your browser
+            settings, or use Google’s{" "}
+            <a
+              href="https://tools.google.com/dlpage/gaoptout"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-violet-600 underline underline-offset-4 dark:text-violet-400"
+            >
+              Analytics opt-out browser add-on
+            </a>
+            . Tool functionality does not depend on analytics being available.
           </p>
         </section>
         <section>

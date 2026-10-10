@@ -23,6 +23,8 @@ jobs:
     name: Test and build the static website
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      ftp_configured: ${{ steps.deployment-settings.outputs.ftp_configured }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -51,10 +53,69 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Check optional FTP deployment settings
+        id: deployment-settings
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          HOSTINGER_FTP_SERVER: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          HOSTINGER_FTP_USERNAME: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          HOSTINGER_FTP_PASSWORD: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          HOSTINGER_FTP_DIRECTORY: ${{ secrets.HOSTINGER_FTP_DIRECTORY }}
+        run: |
+          configured=true
+          for key in HOSTINGER_FTP_SERVER HOSTINGER_FTP_USERNAME HOSTINGER_FTP_PASSWORD HOSTINGER_FTP_DIRECTORY; do
+            if [ -z "${!key}" ]; then configured=false; fi
+          done
+          printf 'ftp_configured=%s\n' "$configured" >> "$GITHUB_OUTPUT"
+          if [ "$configured" = false ]; then
+            echo 'FTP deployment is not configured. The compiled hostinger branch is still published for Hostinger hPanel Git.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  publish_hostinger_git:
+    name: Update compiled website branch for Hostinger Git
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository with branch publishing access
+        uses: actions/checkout@v4
+
+      - name: Download tested website outside the source tree
+        uses: actions/download-artifact@v4
+        with:
+          name: static-website
+          path: ${{ runner.temp }}/static-website
+
+      - name: Publish static files at the branch root
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          test -f "$RUNNER_TEMP/static-website/index.html"
+          test -f "$RUNNER_TEMP/static-website/.htaccess"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if [ -n "$(git ls-remote --heads origin hostinger)" ]; then
+            git fetch --no-tags origin hostinger
+            git checkout --force -B hostinger FETCH_HEAD
+          else
+            git checkout --orphan hostinger
+          fi
+          git rm -r --ignore-unmatch -- .
+          cp -a "$RUNNER_TEMP/static-website/." .
+          git add --all
+          if ! git diff --cached --quiet; then
+            git commit -m "Build website from ${SOURCE_SHA}"
+          fi
+          git push origin HEAD:refs/heads/hostinger
+          echo 'Hostinger hPanel Git: use branch hostinger and deploy into this subdomain’s document root. Edit source on main.' >> "$GITHUB_STEP_SUMMARY"
+
   deploy:
     name: Publish static files to Hostinger
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.build.outputs.ftp_configured == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:

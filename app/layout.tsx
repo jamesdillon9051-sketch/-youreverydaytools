@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { SiteChrome } from "@/components/SiteChrome";
 import { AdsterraAds } from "@/components/AdsterraAds";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { siteUrl } from "@/lib/catalog";
 import "./globals.css";
 
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <GoogleAnalytics />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
@@ -42,7 +44,8 @@ export default function RootLayout({
             <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
             <span>
               🔒 Local processing — Our tools process files in your browser
-              without uploading them. Third-party ads load separately.
+              without uploading them. Third-party ads and analytics load
+              separately.
             </span>
           </div>
           <main

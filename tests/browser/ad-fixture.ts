@@ -1,6 +1,9 @@
 import type { Page } from "@playwright/test";
 
 export async function mockAdsterra(page: Page) {
+  await page.route("https://www.googletagmanager.com/**", (route) =>
+    route.fulfill({ contentType: "application/javascript", body: "" }),
+  );
   await page.route(
     "https://disembroildisembroildissipatespots.com/**",
     async (route) => {

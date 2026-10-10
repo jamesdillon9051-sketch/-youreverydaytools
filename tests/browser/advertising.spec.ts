@@ -4,7 +4,7 @@ import { mockAdsterra } from "./ad-fixture";
 
 test.beforeEach(async ({ page }) => mockAdsterra(page));
 
-test("all page types render exactly one native and rectangular placement", async ({
+test("all page types initialize analytics and render one native and rectangular placement", async ({
   page,
 }) => {
   const paths = [
@@ -21,6 +21,32 @@ test("all page types render exactly one native and rectangular placement", async
   ];
   for (const path of paths) {
     await page.goto(path);
+    await expect(
+      page.locator("head script#google-analytics-loader"),
+    ).toHaveCount(1);
+    await expect(
+      page.locator("head script#google-analytics-loader"),
+    ).toHaveAttribute(
+      "src",
+      "https://www.googletagmanager.com/gtag/js?id=G-8SNLQK3R0B",
+    );
+    await expect(
+      page.locator("head script#google-analytics-loader"),
+    ).toHaveAttribute("async", "");
+    expect(
+      await page.evaluate(() =>
+        Array.from(
+          (window as unknown as { dataLayer: IArguments[] }).dataLayer,
+          (item) => Array.from(item).slice(0, 2),
+        ).map((item) => [
+          item[0],
+          item[0] === "js" ? typeof item[1].getTime === "function" : item[1],
+        ]),
+      ),
+    ).toEqual([
+      ["js", true],
+      ["config", "G-8SNLQK3R0B"],
+    ]);
     await expect(
       page.locator("#container-e4020df4957732c0eb03cdcb6d36d610"),
     ).toHaveCount(1);
@@ -80,6 +106,17 @@ test("shared scripts persist through navigation and ads fit a 320px screen", asy
         .__adsterraSocialLoads,
     })),
   ).toEqual({ native: 1, social: 1 });
+  await expect(page.locator("head script#google-analytics-loader")).toHaveCount(
+    1,
+  );
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { dataLayer: IArguments[] }).dataLayer.filter(
+          (item) => item[0] === "config",
+        ).length,
+    ),
+  ).toBe(1);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -96,6 +133,9 @@ test("shared scripts persist through navigation and ads fit a 320px screen", asy
 });
 
 test("blocked ad scripts do not prevent tool use", async ({ page }) => {
+  await page.route("https://www.googletagmanager.com/**", (route) =>
+    route.abort(),
+  );
   await page.route(
     "https://disembroildisembroildissipatespots.com/**",
     (route) => route.abort(),
