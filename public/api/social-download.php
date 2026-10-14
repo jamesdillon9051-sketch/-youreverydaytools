@@ -1,5 +1,7 @@
 <?php
  declare(strict_types=1);
+ // Notices or warnings printed into the response would corrupt the file and can reveal server paths.
+ @ini_set('display_errors', '0');
  define('LOCALTOOLS_SOCIAL', true);
  require __DIR__ . '/social-lib.php';
  $temporary = null;
@@ -42,6 +44,7 @@
      $extensions = ['image/jpeg' => 'jpg','image/png' => 'png','image/webp' => 'webp','image/gif' => 'gif','image/avif' => 'avif','video/mp4' => 'mp4'];
      $filename = pathinfo($filename,PATHINFO_FILENAME) . '.' . $extensions[$mime];
      header('Content-Type: ' . $mime); header('Content-Length: ' . $bytes); header('Cache-Control: private, no-store'); header('X-Content-Type-Options: nosniff');
+     header("Content-Security-Policy: default-src 'none'; sandbox"); header('Cross-Origin-Resource-Policy: same-origin');
      header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . '; filename="' . $filename . '"');
      rewind($temporary); fpassthru($temporary);
  } catch (SocialError $e) { social_json(['error' => $e->getMessage()],$e->status); }

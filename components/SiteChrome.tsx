@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
@@ -20,9 +20,11 @@ import { ToolIcon, categoryColors } from "./Icons";
 
 export function SiteChrome() {
   const pathname = usePathname();
+  const router = useRouter();
   const [dark, setDark] = useState(false);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
+  const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
   const search = useRef<HTMLInputElement>(null);
   const results = tools
@@ -116,12 +118,27 @@ export function SiteChrome() {
           <input
             ref={search}
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setActive(0);
+            }}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 180)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && results[0]) {
-                window.location.assign(toolPath(results[0]));
+              if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                setFocused(true);
+                if (results.length)
+                  setActive(
+                    (current) =>
+                      (current +
+                        (event.key === "ArrowDown" ? 1 : -1) +
+                        results.length) %
+                      results.length,
+                  );
+              } else if (event.key === "Enter" && results[active]) {
+                event.preventDefault();
+                router.push(toolPath(results[active]));
               }
             }}
             className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-12 text-sm transition placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900"
@@ -130,6 +147,11 @@ export function SiteChrome() {
             role="combobox"
             aria-expanded={focused}
             aria-controls="search-results"
+            aria-activedescendant={
+              focused && results[active]
+                ? `search-option-${results[active].slug}`
+                : undefined
+            }
             autoComplete="off"
           />
           <span className="pointer-events-none absolute right-3 top-2.5 hidden items-center gap-0.5 rounded border border-slate-200 px-1 text-[10px] text-slate-400 dark:border-slate-700 sm:flex">
@@ -142,13 +164,14 @@ export function SiteChrome() {
               role="listbox"
             >
               {results.length ? (
-                results.map((tool) => (
+                results.map((tool, index) => (
                   <Link
                     role="option"
-                    aria-selected={false}
+                    id={`search-option-${tool.slug}`}
+                    aria-selected={index === active}
                     key={tool.slug}
                     href={toolPath(tool)}
-                    className="flex items-center gap-3 rounded-lg p-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className={`flex items-center gap-3 rounded-lg p-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 ${index === active ? "bg-slate-50 dark:bg-slate-800" : ""}`}
                   >
                     <ToolIcon name={tool.icon} />
                     <span>{tool.name}</span>
@@ -204,7 +227,7 @@ export function SiteChrome() {
       {open && (
         <nav
           aria-label="Mobile navigation"
-          className="fixed inset-x-0 top-[76px] z-50 border-b border-slate-200 bg-white p-5 shadow-lg dark:border-slate-800 dark:bg-slate-950 lg:hidden"
+          className="fixed inset-x-0 top-[76px] z-50 max-h-[calc(100vh-76px)] overflow-y-auto supports-[height:100dvh]:max-h-[calc(100dvh-76px)] border-b border-slate-200 bg-white p-5 shadow-lg dark:border-slate-800 dark:bg-slate-950 lg:hidden"
         >
           {navigation}
         </nav>

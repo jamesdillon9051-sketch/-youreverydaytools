@@ -1,7 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Check, Copy, FileUp, LoaderCircle, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Check,
+  CircleCheck,
+  Copy,
+  FileUp,
+  LoaderCircle,
+  TriangleAlert,
+  X,
+} from "lucide-react";
 import { formatBytes } from "@/lib/browser";
 
 export function FileDropzone({
@@ -25,19 +33,25 @@ export function FileDropzone({
     <div
       onDragOver={(event) => {
         event.preventDefault();
-        if (!disabled) setDragging(true);
+        if (!disabled) {
+          event.dataTransfer.dropEffect = "copy";
+          setDragging(true);
+        }
       }}
-      onDragLeave={() => setDragging(false)}
+      onDragLeave={(event) => {
+        // Moving between child elements also fires dragleave; ignore that.
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+          setDragging(false);
+      }}
       onDrop={(event) => {
         event.preventDefault();
         setDragging(false);
-        if (!disabled)
-          onFiles(
-            Array.from(event.dataTransfer.files).slice(
-              0,
-              multiple ? undefined : 1,
-            ),
-          );
+        if (disabled) return;
+        const dropped = Array.from(event.dataTransfer.files).slice(
+          0,
+          multiple ? undefined : 1,
+        );
+        if (dropped.length) onFiles(dropped);
       }}
       className={`rounded-2xl border-2 border-dashed transition ${dragging ? "border-violet-500 bg-violet-50 dark:bg-violet-950/30" : "border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-950/40"}`}
     >
@@ -50,7 +64,8 @@ export function FileDropzone({
         className="sr-only"
         aria-label="Choose local files"
         onChange={(event) => {
-          if (event.target.files) onFiles(Array.from(event.target.files));
+          if (event.target.files?.length)
+            onFiles(Array.from(event.target.files));
           event.target.value = "";
         }}
       />
@@ -89,6 +104,7 @@ export function FileList({
           </span>
           {onRemove && (
             <button
+              type="button"
               onClick={() => onRemove(i)}
               className="p-1 text-slate-400 hover:text-rose-500"
               aria-label={`Remove ${file.name}`}
@@ -111,23 +127,111 @@ export function ErrorNotice({ message }: { message: string }) {
     </p>
   ) : null;
 }
-export function BusyLabel({ busy, idle }: { busy: boolean; idle: string }) {
+/** Polite, non-interrupting confirmation or guidance (use ErrorNotice for failures). */
+export function StatusNotice({
+  children,
+  tone = "success",
+}: {
+  children: React.ReactNode;
+  tone?: "success" | "warning";
+}) {
+  const Icon = tone === "success" ? CircleCheck : TriangleAlert;
+  return (
+    <div
+      role="status"
+      className={`flex items-start gap-2 rounded-xl border p-3 text-sm ${tone === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300" : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200"}`}
+    >
+      <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+/** Determinate when `value` (0–100) is given, otherwise an indeterminate pulse. */
+export function ProgressBar({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value?: number;
+  detail?: string;
+}) {
+  const percent =
+    value === undefined ? undefined : Math.min(100, Math.max(0, value));
+  return (
+    <div className="space-y-1.5" role="status" aria-live="polite">
+      <div className="flex items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-300">
+        <span className="min-w-0 truncate">{label}</span>
+        {detail && (
+          <span className="shrink-0 tabular-nums text-slate-400">{detail}</span>
+        )}
+      </div>
+      <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent === undefined ? undefined : Math.round(percent)}
+        className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+      >
+        <div
+          className={`h-full rounded-full bg-violet-600 transition-[width] duration-200 ${percent === undefined ? "progress-indeterminate w-1/3" : ""}`}
+          style={percent === undefined ? undefined : { width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+export function BusyLabel({
+  busy,
+  idle,
+  busyText = "Processing locally…",
+}: {
+  busy: boolean;
+  idle: string;
+  busyText?: string;
+}) {
   return (
     <>
       {busy && <LoaderCircle className="h-4 w-4 animate-spin" />}
-      {busy ? "Processing locally…" : idle}
+      {busy ? busyText : idle}
     </>
   );
+}
+async function writeClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return;
+  } catch {
+    // Fall through: the async API is missing or blocked (some in-app browsers).
+  }
+  const active = document.activeElement as HTMLElement | null;
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  document.body.appendChild(area);
+  area.select();
+  try {
+    if (!document.execCommand("copy")) throw new Error("Copy was rejected.");
+  } finally {
+    area.remove();
+    active?.focus();
+  }
 }
 export function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
   async function copy() {
     try {
-      await navigator.clipboard.writeText(text);
+      await writeClipboard(text);
       setCopied(true);
       setError("");
-      setTimeout(() => setCopied(false), 2000);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       setError(
         "Clipboard access is unavailable. Select and copy the output manually.",
@@ -170,6 +274,20 @@ export function NumberField({
   step?: number | "any";
   suffix?: string;
 }) {
+  // Keep the raw text so the field can be emptied and retyped; the parent
+  // still receives 0 for an empty field.
+  const [text, setText] = useState(Number.isFinite(value) ? String(value) : "");
+  useEffect(() => {
+    setText((current) =>
+      Number(current) === value && current !== ""
+        ? current
+        : current === "" && value === 0
+          ? current
+          : Number.isFinite(value)
+            ? String(value)
+            : "",
+    );
+  }, [value]);
   return (
     <label className="block">
       <span className="label">{label}</span>
@@ -178,10 +296,14 @@ export function NumberField({
           aria-label={label}
           className={`input ${suffix ? "pr-12" : ""}`}
           type="number"
-          value={Number.isNaN(value) ? "" : value}
-          onChange={(event) =>
-            onChange(event.target.value === "" ? 0 : Number(event.target.value))
-          }
+          inputMode="decimal"
+          value={text}
+          onChange={(event) => {
+            setText(event.target.value);
+            onChange(
+              event.target.value === "" ? 0 : Number(event.target.value),
+            );
+          }}
           min={min}
           max={max}
           step={step}

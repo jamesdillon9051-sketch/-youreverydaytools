@@ -57,6 +57,7 @@ Useful files to edit:
 | Global header, sidebar, theme, search                 | `components/SiteChrome.tsx`                 |
 | Layout, privacy banner, footer                        | `app/layout.tsx`                            |
 | Image, PDF, developer, calculator, generator behavior | Corresponding module in `components/tools/` |
+| Micro Finance app (at `/finance/`) and its listing    | `docs/micro-finance.md`                     |
 | Privacy Policy                                        | `app/privacy-policy/page.tsx`               |
 | About Us                                              | `app/about/page.tsx`                        |
 | Styling                                               | `app/globals.css`                           |

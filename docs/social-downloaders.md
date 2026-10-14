@@ -17,7 +17,10 @@ return [
     'signing_key' => '',
     'hourly_requests' => 10,
     'daily_requests' => 500,
+    'hourly_downloads' => 80,
     'max_download_bytes' => 128 * 1024 * 1024,
+    // Only if the site sits behind a CDN or proxy; see "Client addresses behind a CDN" below.
+    'client_ip_header' => '',
 ];
 ```
 
@@ -52,8 +55,20 @@ Only supported public content is retrieved. Private accounts, expired stories, b
 
 Individual files are capped at 128 MB by default. Browser ZIPs are capped at 30 files and 64 MB. HMAC-signed links expire after 15 minutes. The download gateway allows known platform media CDN domains, validates every redirect, pins DNS to public IPv4 addresses, verifies TLS, and accepts only supported image MIME types or MP4. Temporary files are removed at request completion. No arbitrary user-supplied URL is proxied. Additional CDN hosts must be explicitly reviewed in `social_media_url` if providers change their delivery domains.
 
-Rate limits default to 10 extraction requests per client per hour and 500 total extractions per day. Preview and download requests have a separate 80-per-hour client limit. Client identifiers are keyed IP hashes, not raw IP addresses; rate records older than two days are removed on subsequent requests. Hostinger and provider logs follow their own policies. Limits reduce provider usage but do not replace a provider account spending cap; set that cap in your provider dashboard.
+Rate limits default to 10 extraction requests per client per hour and 500 total extractions per day. Preview and download requests have a separate per-client hourly limit (`hourly_downloads`, 80 by default). Every preview image counts as one request, so a result with many items uses part of that allowance before anything is downloaded; raise `hourly_downloads` if your audience routinely fetches large carousels or story sets. Client identifiers are keyed IP hashes, not raw IP addresses; rate records older than two days are removed on subsequent requests, and counters for earlier hours inside a day are dropped as soon as the next request arrives. Hostinger and provider logs follow their own policies. Limits reduce provider usage but do not replace a provider account spending cap; set that cap in your provider dashboard.
+
+### Client addresses behind a CDN
+
+Limits are keyed on `REMOTE_ADDR`. If a CDN or reverse proxy sits in front of the site (for example a CDN enabled in hPanel, or your own Cloudflare account), `REMOTE_ADDR` is the proxy's address and every visitor would share one rate-limit bucket: ten lookups per hour for the whole site. Check this once after activation by making an extraction request from two different networks. If both are limited together, set `client_ip_header` to the header your proxy **overwrites** with the visitor's address, for example `'client_ip_header' => 'CF-Connecting-IP'` for Cloudflare. The gateway honors the header only when you name it, accepts only a valid IP address from it, and otherwise falls back to `REMOTE_ADDR`. Never name a header that visitors can set themselves (an `X-Forwarded-For` that your proxy only appends to, for instance), because that lets anyone evade the limits.
+
+### Error handling and logs
+
+The endpoints turn off PHP's `display_errors` so a notice or warning can never be mixed into JSON or a media file, and unexpected failures return a generic message instead of internal details. Shared hosts often write PHP's `error_log` file next to the failing script; `api/.htaccess` and the site's root `.htaccess` deny web access to `error_log` and `*.log` files, but you should still check hPanel's PHP error log settings and delete stale logs from the document root.
+
+### How the browser uses the gateway
+
+Individual downloads and ZIPs are fetched by the page itself, so it can show progress, cancel, and explain failures (expired link, usage limit, upstream error) in plain language instead of leaving a failed browser download. Large files are held in memory while they download (up to the 128 MB limit for one file, 64 MB for a ZIP). A lookup for a highlight list keeps that list on screen if one highlight later fails, so choosing another does not cost another hourly extraction. Links pasted without `https://` (for example `x.com/user/status/1`) are completed before they are sent; links for another platform are still rejected.
 
 ## Verify changes
 
-Run `npm test`, `php tests/social-api.test.php`, `npm run build`, and `npm run test:browser`. PHP tests cover signatures, expiry, unsafe addresses, provider fixture normalization, private profiles, public stories/highlights, quality selection, and usage limits. Browser tests mock provider responses and exercise selection, ZIP downloads, cancellations, and service-unavailable messages. Real upstream retrieval requires configured accounts and must be verified with your own public media after activation. CI runs PHP tests before publishing.
+Run `npm test`, `php tests/social-api.test.php`, `npm run build`, and `npm run test:browser`. PHP tests cover signatures, expiry, unsafe addresses (including control characters smuggled in as HTML entities), provider fixture normalization, private profiles, public stories/highlights, quality selection, usage limits, trusted-proxy client addresses, and the same-origin rule. Browser tests mock provider responses and exercise selection, ZIP downloads, cancellations, and service-unavailable messages. Real upstream retrieval requires configured accounts and must be verified with your own public media after activation. CI runs PHP tests before publishing.

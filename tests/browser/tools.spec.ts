@@ -185,7 +185,7 @@ test("calculators update projections and export amortization", async ({
   await expect(page.getByText("$3,400", { exact: true }).first()).toBeVisible();
   await page.goto("/tools/calculators/mortgage-payoff/");
   await expect(
-    page.getByRole("heading", { name: "Amortization schedule" }),
+    page.getByRole("heading", { name: "Amortization schedule", level: 2 }),
   ).toBeVisible();
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export CSV" }).click();

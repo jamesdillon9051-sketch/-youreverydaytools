@@ -18,6 +18,7 @@ import {
   Sparkles,
   Calculator,
   Download,
+  Wallet,
 } from "lucide-react";
 
 const icons = {
@@ -40,6 +41,7 @@ const icons = {
   sparkles: Sparkles,
   calculator: Calculator,
   download: Download,
+  wallet: Wallet,
 };
 export function ToolIcon({
   name,

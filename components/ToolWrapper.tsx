@@ -78,6 +78,34 @@ export function ToolWrapper({
               </div>
             ))}
           </div>
+          {tool.modules && (
+            <section
+              aria-labelledby="tools-and-features"
+              className="panel mt-7 p-6"
+            >
+              <h2
+                id="tools-and-features"
+                className="text-xl font-semibold tracking-tight"
+              >
+                Tools and features
+              </h2>
+              <ol className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+                {tool.modules.map((module, i) => (
+                  <li key={module.name} className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-50 text-xs font-semibold text-violet-600 dark:bg-violet-950 dark:text-violet-300">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold">{module.name}</h3>
+                      <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                        {module.description}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
           <section id="how-to-use" className="panel mt-7 p-6">
             <h2 className="text-xl font-semibold tracking-tight">How to Use</h2>
             <ol className="mt-5 space-y-4">

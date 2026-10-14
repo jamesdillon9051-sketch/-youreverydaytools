@@ -5,13 +5,18 @@
  $count = 0;
  function check(bool $condition, string $message): void { global $count; if (!$condition) throw new RuntimeException($message); $count++; }
  function rejects(callable $call, int $status): void { try { $call(); } catch (SocialError $e) { check($e->status === $status,'Unexpected error status: ' . $e->status); return; } throw new RuntimeException('Expected rejection.'); }
- $config = ['signing_key' => 'fixture-signing-key-not-a-live-credential','scrapecreators_key' => '', 'rocketapi_key' => '', 'storage_dir' => sys_get_temp_dir() . '/localtools-test-' . bin2hex(random_bytes(6)), 'hourly_requests' => 2, 'daily_requests' => 3];
+ $config = ['signing_key' => 'fixture-signing-key-not-a-live-credential','scrapecreators_key' => '', 'rocketapi_key' => '', 'storage_dir' => sys_get_temp_dir() . '/localtools-test-' . bin2hex(random_bytes(6)), 'hourly_requests' => 2, 'daily_requests' => 3, 'hourly_downloads' => 2];
  foreach (['127.0.0.1','10.0.0.1','169.254.169.254','172.16.1.1','192.168.1.1','100.64.1.1','198.18.0.1','::1','::ffff:127.0.0.1','192.0.0.2'] as $ip) check(!social_public_ip($ip),'Private address accepted: ' . $ip);
  check(social_public_ip('1.1.1.1'),'Public address rejected.');
  foreach (['http://pbs.twimg.com/a.jpg','https://pbs.twimg.com.attacker.test/a.jpg','https://localhost/a.jpg','https://pbs.twimg.com:443/a.jpg','https://user@pbs.twimg.com/a.jpg','https://127.0.0.1/a.jpg','https://pbs.twimg.com/a.jpg%0d%0a'] as $url) {
      if (str_contains($url,'%0d')) continue;
      rejects(fn() => social_media_url($url),502);
  }
+ foreach (['&#x0A;','&#10;','&#13;&#10;','&NewLine;','&Tab;','&#9;','&#32;'] as $entity) rejects(fn() => social_media_url('https://pbs.twimg.com/a.jpg' . $entity . 'b'),502);
+ rejects(fn() => social_media_url('https://pbs.twimg.com\\.evil.test/a.jpg'),502);
+ rejects(fn() => social_media_url('https://evil.test\\@pbs.twimg.com/a.jpg'),502);
+ check(social_media_url('https://pbs.twimg.com/a.jpg?x=1&amp;y=2') === 'https://pbs.twimg.com/a.jpg?x=1&y=2','Valid entity decoding failed.');
+ rejects(fn() => social_input('tiktok','post',"https://www.tiktok.com/@a/video/1\r\nX: y"),400);
  rejects(fn() => social_input('twitter','post','https://x.com.attacker.test/person/status/1'),400);
  rejects(fn() => social_input('facebook','stories','user'),400);
  rejects(fn() => social_input('instagram','profile','https://instagram.com/reel/123/'),400);
@@ -63,5 +68,27 @@
      $_SERVER['REMOTE_ADDR'] = '192.0.2.16'; social_rate($config,'extract');
      $_SERVER['REMOTE_ADDR'] = '192.0.2.17'; rejects(fn() => social_rate($config,'extract'),429);
      $saved = file_get_contents((glob($config['storage_dir'].'/*') ?: [])[0]); check(!str_contains($saved,'192.0.2.'),'Raw client IP persisted.');
+     $_SERVER['REMOTE_ADDR'] = '203.0.113.9'; unset($_SERVER['HTTP_CF_CONNECTING_IP']);
+     check(social_client_ip($config) === '203.0.113.9','Remote address not used.');
+     $_SERVER['HTTP_CF_CONNECTING_IP'] = '198.51.100.7';
+     check(social_client_ip($config) === '203.0.113.9','Proxy header trusted without operator configuration.');
+     $proxied = array_merge($config,['client_ip_header' => 'CF-Connecting-IP']);
+     check(social_client_ip($proxied) === '198.51.100.7','Configured proxy header ignored.');
+     $_SERVER['HTTP_CF_CONNECTING_IP'] = 'not-an-ip';
+     check(social_client_ip($proxied) === '203.0.113.9','Invalid proxy header accepted.');
+     $_SERVER['HTTP_CF_CONNECTING_IP'] = '198.51.100.8, 10.0.0.1';
+     check(social_client_ip($proxied) === '198.51.100.8','Proxy list not reduced to the first address.');
+     check(social_client_ip(array_merge($config,['client_ip_header' => "X\r\nInjected"])) === '203.0.113.9','Malformed header name accepted.');
+     unset($_SERVER['HTTP_CF_CONNECTING_IP']);
+     $_SERVER['REMOTE_ADDR'] = '192.0.2.50'; social_rate($config,'download'); social_rate($config,'download'); rejects(fn() => social_rate($config,'download'),429);
+     $state = glob($config['storage_dir'].'/rate-*.json')[0];
+     $saved = json_decode(file_get_contents($state),true); $saved['extract:2000010100:stale'] = 9; file_put_contents($state,json_encode($saved));
+     $_SERVER['REMOTE_ADDR'] = '192.0.2.51'; social_rate($config,'download');
+     check(!str_contains(file_get_contents($state),'2000010100'),'Counters from earlier hours were kept.');
+     $_SERVER['HTTP_HOST'] = 'Tools.example.com:8443'; unset($_SERVER['HTTP_ORIGIN'],$_SERVER['HTTP_SEC_FETCH_SITE']);
+     social_require_same_origin(); $count++;
+     $_SERVER['HTTP_ORIGIN'] = 'https://tools.EXAMPLE.com'; social_require_same_origin(); $count++;
+     foreach (['https://evil.example','null','https://tools.example.com.evil.example','not a url'] as $origin) { $_SERVER['HTTP_ORIGIN'] = $origin; rejects(fn() => social_require_same_origin(),403); }
+     $_SERVER['HTTP_ORIGIN'] = 'https://tools.example.com'; $_SERVER['HTTP_SEC_FETCH_SITE'] = 'cross-site'; rejects(fn() => social_require_same_origin(),403);
  } finally { foreach (glob($config['storage_dir'].'/*') ?: [] as $file) unlink($file); if (is_dir($config['storage_dir'])) rmdir($config['storage_dir']); }
  echo 'Social API: ' . $count . " checks passed.\n";

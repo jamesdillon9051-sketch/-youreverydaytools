@@ -106,7 +106,10 @@ for (const file of sourceFiles) {
   const name = relative(root, file);
   const bytes = Buffer.from(sourceEntries[name]);
   sourceDocument += `## ${name}\n\n`;
-  if (name.endsWith(".png"))
+  if (name.startsWith("public/finance/"))
+    sourceDocument +=
+      "Built output of the Micro Finance app, provided in both ZIPs. `scripts/build-micro-finance.mjs` rebuilds it from the app's repository.\n\n";
+  else if (name.endsWith(".png"))
     sourceDocument +=
       "This binary PNG is provided in both ZIPs. Its complete Base64 encoding is included for reconstruction.\n\n```base64\n" +
       bytes.toString("base64") +
@@ -123,7 +126,7 @@ await writeFile(join(artifacts, "FULL-SOURCE.md"), sourceDocument);
 const sitemap = await readFile(join(output, "sitemap.xml"), "utf8");
 const match = sitemap.match(/<loc>(https?:\/\/[^<]+)<\/loc>/);
 const domain = match ? new URL(match[1]).origin : "the configured domain";
-const guide = `# Hostinger upload instructions\n\nConfigured website: **${domain}**\n\n1. Open Hostinger hPanel → Websites → your website → File Manager.\n2. Open the domain's document root, normally \`public_html\`. Back up any existing files first.\n3. Upload \`localtools-hostinger.zip\` and extract it directly into that document root.\n4. Confirm \`index.html\`, \`_next/\`, \`tools/\`, \`about/\`, \`privacy-policy/\`, and \`.htaccess\` are directly inside the document root. Do not create an extra \`out/\` folder.\n5. Enable HTTPS for the domain. Check ${domain}/ and a tool page.\n6. Check ${domain}/sitemap.xml and ${domain}/robots.txt. Submit the sitemap URL in Google Search Console.\n\nThe hosting ZIP includes 15 browser utilities, nine social downloaders, six category pages, About Us, Privacy Policy, SEO metadata, structured data, static assets, a custom 404 page, and Apache configuration. No Node.js or database is needed on Hostinger. Social downloaders additionally require PHP with cURL and private provider API keys; see SOCIAL-DOWNLOADERS.md included in the archive. The original 15 utilities require no API configuration.\n\nThe separate \`localtools-source.zip\` is for editing and rebuilding. Keep it outside \`public_html\`. \`FULL-SOURCE.md\` contains the complete directory tree and every source file.\n`;
+const guide = `# Hostinger upload instructions\n\nConfigured website: **${domain}**\n\n1. Open Hostinger hPanel → Websites → your website → File Manager.\n2. Open the domain's document root, normally \`public_html\`. Back up any existing files first.\n3. Upload \`localtools-hostinger.zip\` and extract it directly into that document root.\n4. Confirm \`index.html\`, \`_next/\`, \`tools/\`, \`about/\`, \`privacy-policy/\`, \`finance/\`, and \`.htaccess\` are directly inside the document root. Do not create an extra \`out/\` folder.\n5. Enable HTTPS for the domain. Check ${domain}/ and a tool page.\n6. Check ${domain}/sitemap.xml and ${domain}/robots.txt. Submit the sitemap URL in Google Search Console.\n\nThe hosting ZIP includes 15 browser utilities, nine social downloaders, the Micro Finance budgeting app (installable and offline, in \`finance/\`) with its launch page, six category pages, About Us, Privacy Policy, SEO metadata, structured data, static assets, a custom 404 page, and Apache configuration. No Node.js or database is needed on Hostinger. Social downloaders additionally require PHP with cURL and private provider API keys; see SOCIAL-DOWNLOADERS.md included in the archive. The original 15 utilities require no API configuration.\n\nThe separate \`localtools-source.zip\` is for editing and rebuilding. Keep it outside \`public_html\`. \`FULL-SOURCE.md\` contains the complete directory tree and every source file.\n`;
 await writeFile(join(artifacts, "HOSTINGER-UPLOAD.md"), guide);
 console.log(
   `Created Hostinger ZIP (${websiteFiles.length} files), source ZIP (${sourceFiles.length} files), full source document, and upload guide for ${domain}.`,

@@ -2,6 +2,41 @@ export const siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL ||
   "https://youreverydaytools.weeklydelight.com"
 ).replace(/\/$/, "");
+/**
+ * Accept only a plain https address, so a mistyped or hostile build setting can
+ * never become a link. Anything else yields an empty string.
+ */
+export function externalAppUrl(value: string | undefined) {
+  try {
+    const url = new URL((value ?? "").trim());
+    return url.protocol === "https:" && !url.username && !url.password
+      ? url.href
+      : "";
+  } catch {
+    return "";
+  }
+}
+/** Where the Micro Finance app is served inside this site (public/finance/). */
+export const microFinancePath = "/finance/";
+/**
+ * The address behind "Open Micro Finance". The app ships inside this site, so by
+ * default that is its own folder. Set NEXT_PUBLIC_MICRO_FINANCE_URL (https only)
+ * when building to send visitors to a copy hosted on its own address instead.
+ */
+export const microFinanceUrl =
+  externalAppUrl(process.env.NEXT_PUBLIC_MICRO_FINANCE_URL) || microFinancePath;
+/**
+ * Whether an address is on this site's own origin. An app served from there
+ * shares its browser storage with every script that runs on the site's pages.
+ */
+export function sharesSiteOrigin(url: string) {
+  if (url.startsWith("/")) return true;
+  try {
+    return new URL(url).origin === new URL(siteUrl).origin;
+  } catch {
+    return false;
+  }
+}
 export const categories = [
   {
     slug: "media",
@@ -48,6 +83,7 @@ export const categories = [
   },
 ] as const;
 export type CategorySlug = (typeof categories)[number]["slug"];
+export type ToolModule = { name: string; description: string };
 export type Tool = {
   slug: string;
   category: CategorySlug;
@@ -59,6 +95,8 @@ export type Tool = {
   features: string[];
   steps: string[];
   faq: { question: string; answer: string }[];
+  /** For larger apps: what they contain, shown as "Tools and features". */
+  modules?: ToolModule[];
 };
 
 export const tools: Tool[] = [
@@ -428,6 +466,153 @@ export const tools: Tool[] = [
         question: "Is this tax advice?",
         answer:
           "No. It uses a simplified flat tax reserve and assumes overhead is deductible. Use your actual local tax rules when setting prices.",
+      },
+    ],
+  },
+  {
+    slug: "micro-finance",
+    category: "calculators",
+    name: "Micro Finance",
+    icon: "wallet",
+    title: "Private offline budgeting app with weekly limits",
+    description:
+      "A private, offline budgeting app: weekly limits, safe-to-spend, bills, savings vaults and insights. Your data never leaves your device.",
+    keywords: [
+      "offline budgeting app",
+      "weekly spending limits",
+      "safe to spend calculator",
+      "private budget tracker no account",
+    ],
+    features: [
+      "Works offline, installs like an app",
+      "No account, upload or bank link",
+      "Weekly limits and safe-to-spend",
+    ],
+    steps: [
+      "Open Micro Finance and enter your monthly take-home pay and payday.",
+      "Choose your Needs, Wants and Savings split; weekly limits are worked out for you.",
+      "Log spending as it happens and check your daily safe-to-spend amount.",
+    ],
+    faq: [
+      {
+        question: "Is my financial data uploaded anywhere?",
+        answer:
+          "No. Micro Finance has no server, accounts or sync, and it never sends your budget anywhere. Your data is stored in your browser on the device you use, so clearing that browser's site data erases it. Use Backup & Restore to keep a copy." +
+          (sharesSiteOrigin(microFinanceUrl)
+            ? " It opens from this site's own address, so scripts that run on the site's other pages (analytics and ads) share the browser storage it uses."
+            : ""),
+      },
+      {
+        question: "Does it work offline, and can I install it?",
+        answer:
+          "Yes. After you open it once it works without a connection. On iPhone, open it in Safari, tap Share, then Add to Home Screen. On Android and desktop Chrome or Edge, use the Install app button in Settings or your browser's install option.",
+      },
+      {
+        question: "Can I use it on more than one device?",
+        answer:
+          "Each device keeps its own data and there is no sync. To move a budget, export a backup on one device and import it on the other.",
+      },
+      {
+        question: "Does it connect to my bank or handle other currencies?",
+        answer:
+          "No. There is no bank connection, so you log income and spending yourself. All amounts are in US dollars (USD).",
+      },
+      {
+        question: "Will it remind me when the app is closed?",
+        answer:
+          "Not reliably. Reminders are checked by the app itself, so they appear while it is open or the next time you open it; a web app cannot run while your phone has it suspended, and this app has no server to push alerts. On iPhone, notifications also need the app added to the Home Screen (iOS 16.4 or later).",
+      },
+      {
+        question: "How do weekly limits and rollover work?",
+        answer:
+          "Each pay period runs from payday to the day before the next payday and is cut into 7-day weeks that start on payday. Weekly caps add up exactly to your monthly Needs and Wants amounts. Unspent money from a finished week can lapse, carry into the next week or move to a savings vault, and rollover applies to Needs and Wants only. Overspending is never carried over as debt. Bills count in the week they are paid, so the week rent leaves your account can show Needs over its cap.",
+      },
+    ],
+    modules: [
+      {
+        name: "Salary Split Calculator",
+        description:
+          "Enter your monthly take-home pay and payday. Needs, Wants and Savings sliders always total 100% and rebalance live, with monthly and weekly amounts for each bucket.",
+      },
+      {
+        name: "Weekly Spending Limits",
+        description:
+          "Monthly buckets become strict weekly caps, with progress bars and over-limit alerts. A week-by-week schedule shows every cap, and the caps add up exactly to the monthly amount.",
+      },
+      {
+        name: "Daily Safe-to-Spend",
+        description:
+          "What is left of this week's Needs and Wants divided by the days left in the week. Shows On track, Running low or Over, and updates as you spend.",
+      },
+      {
+        name: "Weekly Surplus Rollover",
+        description:
+          "Choose what happens to unspent money: let it lapse, carry it into next week, or move it to a savings vault. A rollover history is kept and a week is never applied twice.",
+      },
+      {
+        name: "Quick Expense Logger",
+        description:
+          "A floating Log button on every screen, or Cmd/Ctrl+K. Type the amount first, tap a category chip (your most-used come first), pick Today, Yesterday or a custom date, add a note if you like, and Undo a slip.",
+      },
+      {
+        name: "Transaction Manager",
+        description:
+          "Add, edit and delete income and expenses. 19 expense and 6 income categories are grouped by bucket, and any entry can be flagged as recurring.",
+      },
+      {
+        name: "Transaction Ledger",
+        description:
+          "A searchable table with filters for type, date range (this period, 7 days, 30 days or custom) and category, plus totals and category badges.",
+      },
+      {
+        name: "Bills & Subscriptions Tracker",
+        description:
+          "Give each bill a due day, category and auto-deduct setting. Badges show Overdue, Due today, Upcoming or Paid, Mark paid takes one tap, and monthly paid progress shows how far along you are.",
+      },
+      {
+        name: "Bills Calendar",
+        description:
+          "A month grid with status-coloured due dates, month navigation and a detail view for any day.",
+      },
+      {
+        name: "Savings Vaults",
+        description:
+          "Goal cards with progress rings, a target amount and date, and the monthly amount needed to get there. Deposit and withdraw with overdraft protection, choose from 10 icons, and earn a Goal reached badge.",
+      },
+      {
+        name: "Spending by Category",
+        description:
+          "A donut chart of your top 4 categories plus Other, with a data table alongside.",
+      },
+      {
+        name: "Burn-Rate Chart",
+        description:
+          "Cumulative spending against an even pace and your budget limit, with your daily average and a projection to payday.",
+      },
+      {
+        name: "Net Savings Chart",
+        description:
+          "Income minus Needs and Wants spending for each of the last 6 months.",
+      },
+      {
+        name: "Overview Dashboard",
+        description:
+          "A safe-to-spend hero, income and spent tiles, bucket rings, upcoming bills and recent activity, with banners when you overspend or a bill is due.",
+      },
+      {
+        name: "Notifications",
+        description:
+          "Bill reminders 2 days before and on the due date, a warning when safe-to-spend drops below the level you set, and an evening check-in. Each alert is sent once, each has its own switch, and a test button checks it works. They appear while the app is open or the next time you open it.",
+      },
+      {
+        name: "Backup & Restore",
+        description:
+          "Export your data as a versioned JSON file and import it later. An invalid file changes nothing. You can also erase all data.",
+      },
+      {
+        name: "App features",
+        description:
+          "Installs to the Home Screen on iPhone and Android and works offline, with shortcuts (Log expense, Budget, Bills), an update notice and an offline indicator.",
       },
     ],
   },

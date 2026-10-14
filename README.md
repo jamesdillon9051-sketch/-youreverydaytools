@@ -1,6 +1,6 @@
 # LocalTools
 
-A complete Next.js App Router and Tailwind CSS utility suite. The original 15 utilities process inputs in the browser. Nine social downloaders use a standalone PHP gateway on Hostinger shared hosting with external provider APIs. The frontend remains a Next.js static export, with no Node.js runtime or database on Hostinger.
+A complete Next.js App Router and Tailwind CSS utility suite. The original 15 utilities process inputs in the browser. Nine social downloaders use a standalone PHP gateway on Hostinger shared hosting with external provider APIs. The frontend remains a Next.js static export, with no Node.js runtime or database on Hostinger. Micro Finance, an offline budgeting app, ships inside the site at `/finance/` and is listed alongside the calculators; see [Micro Finance](docs/micro-finance.md).
 
 ## Start locally
 
@@ -46,7 +46,7 @@ Do not upload the source ZIP into `public_html`. Source code, `node_modules`, an
 ## Included pages
 
 - Homepage and six category landing pages.
-- Fifteen dedicated tool pages with canonical metadata, OpenGraph PNG cards, SoftwareApplication, HowTo, FAQ JSON-LD, instructions, and related-tool links.
+- Twenty-five dedicated tool pages (fifteen browser utilities, nine social downloaders, and the Micro Finance launch page) with canonical metadata, OpenGraph PNG cards, SoftwareApplication, HowTo, FAQ JSON-LD, instructions, and related-tool links.
 - About Us (`/about/`) and Privacy Policy (`/privacy-policy/`), linked in the footer and sitemap.
 - Static `robots.txt`, `sitemap.xml`, and custom 404.
 
@@ -66,11 +66,15 @@ PNG output preserves decoded pixels and does not apply lossy quality compression
 
 There are no artificial PDF file-count restrictions. Available browser memory limits practical document sizes. Encrypted PDFs are unsupported. Merging/extracting page content may not preserve interactive forms, bookmarks, signatures, or other document-level features.
 
+Files are accepted by their contents, not their extensions, so a renamed text file is rejected with the file's name. Failures while merging or extracting name the file that caused them (damaged, password-protected, no pages, or too large for the browser's memory), and merging and image conversion show progress with a Cancel button. Image-to-PDF embeds JPEGs without recompressing them, which keeps files small and handles very large photos; JPEGs that carry an EXIF rotation, unusual JPEG variants, and WebP images are drawn on a canvas first, so those are limited to 40 megapixels. Lossy WebP becomes JPEG; PNG, transparent, and lossless images stay lossless.
+
 Currency exchange rates are entered by the user in units per USD. No live exchange-rate API is used. Initial values are explicitly uncalibrated and conversion is paused until the user confirms the rates.
 
 Financial calculations are estimates in USD that exclude jurisdiction-specific rules, inflation, fees, and taxes except the simple freelance tax reserve. Compound interest uses monthly compounding and month-end deposits. Mortgage calculations use fixed monthly principal-and-interest payments and apply extra payments to principal. Freelance overhead is assumed deductible.
 
 QR logo mode uses high error correction and a small logo. Scan-test exported codes before publishing. The password generator uses `crypto.getRandomValues`, unbiased rejection sampling, and conditions results on representing each chosen set. Passwords are never persisted.
+
+JSON output over 30,000 characters is shown as plain text instead of colored tokens, and tree nodes render only when opened, because coloring a 130 KB document froze the page for several seconds. Base64 results over 500,000 characters show a preview; Copy and Download always include the full result. A tool that crashes shows a recovery panel instead of a blank page.
 
 Processing requires modern browser APIs. Text/binary limits and image dimension guards keep the tools responsive. Pages and code must load first; the application does not include a service worker or guaranteed offline navigation.
 
@@ -94,9 +98,15 @@ npm run build
 npm run test:browser
 ```
 
-Calculation tests cover page ranges, known growth values, amortization invariants, freelance rates, exact unit factors, Unicode/binary Base64, and password constraints. Browser checks verify the static site, information pages, theme/search, real image and PDF downloads, regex timeout, QR logo export, calculator results, currency rate confirmation, and absence of file upload requests.
+Calculation tests cover page ranges, known growth values, amortization invariants, freelance rates, exact unit factors, Unicode/binary Base64, and password constraints. File tests cover PDF/JPEG/PNG/WebP detection, EXIF orientation, and error wording; social tests cover input validation, response validation, and the streaming downloader. Browser checks verify the static site, information pages, theme/search, real image and PDF downloads, regex timeout, QR logo export, calculator results, currency rate confirmation, and absence of file upload requests. `tests/browser/robustness.spec.ts` covers PDF size and orientation, file-by-file error messages, social download failures and cancellation, large JSON, a crashing tool, and every page at a 320 px width.
+
+If Playwright reports that its Chromium build is missing and you cannot download one, point a local, uncommitted config at an installed browser with `launchOptions: { executablePath: "/path/to/chromium" }`.
 
 `pdf-lib`, `pdfjs-dist`, `browser-image-compression`, `qrcode`, and `lucide-react` are included as requested. PDF manipulation uses `pdf-lib`; the provided tools do not load PDF.js because they do not rasterize PDF pages. Heavy processing libraries load only when their tool needs them.
+
+## Micro Finance
+
+Micro Finance is a private, offline-first budgeting app built in its own repository. The built app is committed in `public/finance/`, so the normal deploy publishes it at `/finance/` with nothing extra to set up. This site lists it under Calculators with all 17 of its modules and its limits (USD only, no sync, no bank connection, reminders only while the app runs, rollover for Needs and Wants only), and its page says plainly that the app shares this site's address and therefore its browser storage. `node scripts/build-micro-finance.mjs` rebuilds the bundle from the app's repository. Moving it to an address of its own (recommended), refreshing it, and what was verified are in [docs/micro-finance.md](docs/micro-finance.md).
 
 ## Public social downloaders
 
