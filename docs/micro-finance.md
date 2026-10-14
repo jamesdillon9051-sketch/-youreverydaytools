@@ -63,7 +63,7 @@ Nothing below has been done; each step that touches DNS, hosting or a deployment
 </IfModule>
 ```
 
-These headers were tested by serving the built app with exactly this policy in Chromium (see below). The CSP needs `worker-src 'self'` for the service worker; the app's inline `style` props are applied through the CSSOM, which CSP does not restrict, so the app also passed with `style-src 'self'` alone. `'unsafe-inline'` is kept for styles as a safety margin for screens that were not exercised. What was **not** tested is how Hostinger's server interprets the file.
+These headers were tested by serving the built app with exactly this policy in Chromium (see below). The CSP needs `worker-src 'self'` for the service worker; the app's inline `style` props are applied through the CSSOM, which CSP does not restrict, so the app also passed with `style-src 'self'` alone. `'unsafe-inline'` is kept for styles as a safety margin for screens that were not exercised. The file itself has **not** been run on Hostinger. It uses only directives this site's own `.htaccess` already relies on, and the live host honours them: this site's `/_next/static/` files come back with `cache-control: public, max-age=31536000, immutable` through the same `expr=` form. Hostinger also adds `Content-Security-Policy: upgrade-insecure-requests` to its responses on its own; the app loads nothing over plain http, so it does not depend on that.
 
 ## What was verified about the app
 

@@ -6,7 +6,8 @@ ErrorDocument 404 /404.html
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set X-Frame-Options "SAMEORIGIN"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
-  Header always set Content-Security-Policy "base-uri 'self'; object-src 'none'; frame-ancestors 'self'"
+  # Hostinger adds its own upgrade-insecure-requests policy; repeat it here so setting ours can never drop it.
+  Header always set Content-Security-Policy "upgrade-insecure-requests; base-uri 'self'; object-src 'none'; frame-ancestors 'self'"
   Header set Cache-Control "public, max-age=31536000, immutable" "expr=%{REQUEST_URI} =~ m#^/_next/static/#"
 </IfModule>
 
