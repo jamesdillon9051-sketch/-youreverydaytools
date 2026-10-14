@@ -1,11 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { socialModes } from "@/lib/social";
+import { isSocialSlug } from "@/lib/social";
+import { ToolErrorBoundary } from "./ToolErrorBoundary";
 
 const loading = () => (
   <div
     className="h-64 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
+    role="status"
     aria-label="Loading tool"
   />
 );
@@ -35,7 +37,7 @@ const SocialTools = dynamic(() => import("./tools/SocialTools"), {
   ssr: false,
 });
 
-export function ToolLoader({ slug }: { slug: string }) {
+function Tool({ slug }: { slug: string }) {
   if (["webp-to-jpg", "image-compressor", "image-resizer"].includes(slug))
     return <MediaTools mode={slug} />;
   if (["merge-pdf", "split-pdf", "image-to-pdf"].includes(slug))
@@ -44,6 +46,14 @@ export function ToolLoader({ slug }: { slug: string }) {
     return <DeveloperTools mode={slug} />;
   if (["compound-interest", "mortgage-payoff", "freelance-rate"].includes(slug))
     return <CalculatorTools mode={slug} />;
-  if (slug in socialModes) return <SocialTools mode={slug} />;
+  if (isSocialSlug(slug)) return <SocialTools mode={slug} />;
   return <GeneratorTools mode={slug} />;
+}
+
+export function ToolLoader({ slug }: { slug: string }) {
+  return (
+    <ToolErrorBoundary>
+      <Tool slug={slug} />
+    </ToolErrorBoundary>
+  );
 }

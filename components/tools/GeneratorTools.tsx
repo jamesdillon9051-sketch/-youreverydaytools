@@ -19,9 +19,16 @@ import {
   characterSets,
   convertUnit,
   generatePassword,
+  qrColorAdvice,
   unitGroups,
 } from "@/lib/generators";
-import { CopyButton, ErrorNotice, FileDropzone, NumberField } from "./Shared";
+import {
+  CopyButton,
+  ErrorNotice,
+  FileDropzone,
+  NumberField,
+  StatusNotice,
+} from "./Shared";
 
 function QrGenerator() {
   const [text, setText] = useState("https://example.com");
@@ -61,17 +68,21 @@ function QrGenerator() {
           const extent = Number(bounds[1]);
           const logoSize = extent * 0.16;
           const start = (extent - logoSize) / 2;
-          result = result.replace(
-            "</svg>",
-            `<rect x="${start - 1}" y="${start - 1}" width="${logoSize + 2}" height="${logoSize + 2}" fill="${background}"/><image href="${logo}" x="${start}" y="${start}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet"/></svg>`,
-          );
+          const overlay = `<rect x="${start - 1}" y="${start - 1}" width="${logoSize + 2}" height="${logoSize + 2}" fill="${background}"/><image href="${logo}" x="${start}" y="${start}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet"/></svg>`;
+          // A replacer function keeps "$" sequences in the data URL literal.
+          result = result.replace("</svg>", () => overlay);
         }
         if (active) {
           setSvg(result);
           setError("");
         }
       } catch (failure) {
-        if (active) setError(errorMessage(failure));
+        if (active)
+          setError(
+            /too big|too long/i.test(errorMessage(failure))
+              ? "This text is too long for a QR code at the selected error correction level. Shorten it or choose a lower level."
+              : errorMessage(failure),
+          );
       } finally {
         if (active) setBusy(false);
       }
@@ -113,14 +124,25 @@ function QrGenerator() {
   }
   async function downloadPng() {
     try {
-      const image = await loadImage(new Blob([svg], { type: "image/svg+xml" }));
+      // The generated SVG only has a viewBox; Firefox and Safari need explicit
+      // dimensions to rasterize it at the requested resolution.
+      const sized = svg.replace(
+        "<svg ",
+        `<svg width="${size}" height="${size}" `,
+      );
+      const image = await loadImage(
+        new Blob([sized], { type: "image/svg+xml" }),
+      );
       const { canvas, context } = createCanvas(size, size);
       context.drawImage(image, 0, 0, size, size);
       downloadBlob(await canvasBlob(canvas), "qr-code.png");
+      canvas.width = 0;
+      canvas.height = 0;
     } catch (failure) {
       setError(errorMessage(failure));
     }
   }
+  const colorAdvice = qrColorAdvice(foreground, background);
   const preview = svg
     ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
     : "";
@@ -156,6 +178,9 @@ function QrGenerator() {
             />
           </label>
         </div>
+        {colorAdvice && (
+          <StatusNotice tone="warning">{colorAdvice}</StatusNotice>
+        )}
         <div className="grid grid-cols-2 gap-4">
           <label>
             <span className="label">Error correction</span>
@@ -566,10 +591,16 @@ function UnitConverter() {
           {output} <span className="text-lg font-normal">{to}</span>
         </p>
         <p className="muted mt-3 text-xs">
-          {value.toLocaleString()} {from} = {output} {to}
+          {value.toLocaleString("en-US")} {from} = {output} {to}
         </p>
       </div>
-      <CopyButton text={result.value === null ? "" : String(result.value)} />
+      <CopyButton
+        text={
+          result.value === null
+            ? ""
+            : String(Number(result.value.toPrecision(12)))
+        }
+      />
       <ErrorNotice message={result.error} />
       <p className="muted text-xs">
         Results use floating-point arithmetic. Data supports decimal and binary

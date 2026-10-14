@@ -7,9 +7,16 @@ import {
   bytesToBase64,
   downloadBlob,
   errorMessage,
+  sanitizeFilename,
 } from "@/lib/browser";
-import { CopyButton, ErrorNotice, FileDropzone } from "./Shared";
+import { CopyButton, ErrorNotice, FileDropzone, StatusNotice } from "./Shared";
 
+// Rendering one React node per JSON token freezes the page past a few
+// thousand tokens (about 130 KB took 3 s), so large output stays plain text.
+const HIGHLIGHT_LIMIT = 30_000;
+// A textarea holding tens of megabytes also stalls; the full text is always
+// available through Copy and Download.
+const PREVIEW_LIMIT = 500_000;
 type JsonValue =
   null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 function JsonTree({
@@ -21,6 +28,8 @@ function JsonTree({
   name?: string;
   depth?: number;
 }) {
+  // Children of collapsed nodes are not rendered until they are opened.
+  const [open, setOpen] = useState(depth < 2);
   if (typeof value !== "object" || value === null)
     return (
       <div className="py-1 font-mono text-xs">
@@ -44,24 +53,30 @@ function JsonTree({
       </p>
     );
   return (
-    <details open={depth < 2} className="font-mono text-xs">
+    <details
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+      className="font-mono text-xs"
+    >
       <summary className="py-1 text-slate-500 dark:text-slate-400">
         <span className="text-violet-500">{name}</span>{" "}
         {Array.isArray(value)
           ? `[${entries.length} items]`
           : `{${entries.length} keys}`}
       </summary>
-      <div className="ml-3 border-l border-slate-200 pl-3 dark:border-slate-700">
-        {entries.slice(0, 200).map(([key, item]) => (
-          <JsonTree key={key} value={item} name={key} depth={depth + 1} />
-        ))}
-        {entries.length > 200 && (
-          <p className="muted py-2 text-xs">
-            Showing the first 200 entries. All entries remain in the formatted
-            output.
-          </p>
-        )}
-      </div>
+      {open && (
+        <div className="ml-3 border-l border-slate-200 pl-3 dark:border-slate-700">
+          {entries.slice(0, 200).map(([key, item]) => (
+            <JsonTree key={key} value={item} name={key} depth={depth + 1} />
+          ))}
+          {entries.length > 200 && (
+            <p className="muted py-2 text-xs">
+              Showing the first 200 entries. All entries remain in the formatted
+              output.
+            </p>
+          )}
+        </div>
+      )}
     </details>
   );
 }
@@ -119,13 +134,17 @@ function JsonFormatter() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <button
+          type="button"
           className={!minified ? "btn" : "btn-secondary"}
+          aria-pressed={!minified}
           onClick={() => setMinified(false)}
         >
           Beautify
         </button>
         <button
+          type="button"
           className={minified ? "btn" : "btn-secondary"}
+          aria-pressed={minified}
           onClick={() => setMinified(true)}
         >
           Minify
@@ -157,6 +176,8 @@ function JsonFormatter() {
             <span className="label mb-0">Output</span>
             <div className="flex gap-2 text-xs">
               <button
+                type="button"
+                aria-pressed={view === "formatted"}
                 onClick={() => setView("formatted")}
                 className={
                   view === "formatted"
@@ -167,6 +188,8 @@ function JsonFormatter() {
                 Formatted
               </button>
               <button
+                type="button"
+                aria-pressed={view === "tree"}
                 onClick={() => setView("tree")}
                 className={
                   view === "tree"
@@ -187,10 +210,23 @@ function JsonFormatter() {
               <JsonTree value={parsed.value} />
             ) : (
               <pre className="whitespace-pre-wrap break-all font-mono text-xs leading-6">
-                <HighlightJson value={parsed.output} />
+                {parsed.output.length > HIGHLIGHT_LIMIT ? (
+                  parsed.output
+                ) : (
+                  <HighlightJson value={parsed.output} />
+                )}
               </pre>
             )}
           </div>
+          {!parsed.error &&
+            view === "formatted" &&
+            parsed.output.length > HIGHLIGHT_LIMIT && (
+              <p className="muted mt-2 text-xs">
+                Syntax colors are off for output over{" "}
+                {HIGHLIGHT_LIMIT.toLocaleString("en-US")} characters to keep the
+                page responsive. Copy and Download include everything.
+              </p>
+            )}
         </div>
       </div>
       <div className="flex flex-wrap gap-3">
@@ -321,19 +357,35 @@ function Base64Tool() {
           <span className="label">
             {result.binary ? "Binary result" : "Result"}
           </span>
-            <textarea
-              aria-label={result.binary ? "Binary result" : "Result"}
-              className="input h-56 font-mono text-xs leading-6"
-              readOnly
-            value={result.output}
+          <textarea
+            aria-label={result.binary ? "Binary result" : "Result"}
+            className="input h-56 font-mono text-xs leading-6"
+            readOnly
+            value={result.output.slice(0, PREVIEW_LIMIT)}
             spellCheck={false}
           />
         </label>
       </div>
       <div className="flex flex-wrap gap-3">
         <CopyButton text={result.binary ? "" : result.output} />
+        {mode === "encode" && (
+          <button
+            type="button"
+            disabled={!result.output}
+            className="btn-secondary"
+            onClick={() =>
+              downloadBlob(
+                new Blob([result.output], { type: "text/plain;charset=utf-8" }),
+                "encoded.txt",
+              )
+            }
+          >
+            <Download className="h-4 w-4" /> Download .txt
+          </button>
+        )}
         {mode === "decode" && (
           <button
+            type="button"
             disabled={!result.bytes?.length}
             className="btn-secondary"
             onClick={() => {
@@ -342,7 +394,7 @@ function Base64Tool() {
                   new Blob([result.bytes], {
                     type: "application/octet-stream",
                   }),
-                  fileName,
+                  sanitizeFilename(fileName, "decoded.bin"),
                 );
             }}
           >
@@ -350,15 +402,22 @@ function Base64Tool() {
           </button>
         )}
       </div>
+      {result.output.length > PREVIEW_LIMIT && (
+        <StatusNotice tone="warning">
+          Showing the first {PREVIEW_LIMIT.toLocaleString("en-US")} of{" "}
+          {result.output.length.toLocaleString("en-US")} characters. Copy and
+          download include the full result.
+        </StatusNotice>
+      )}
       {mode === "decode" && (
         <label>
           <span className="label">Download filename</span>
           <input
             className="input max-w-xs"
             value={fileName}
-            onChange={(event) =>
-              setFileName(event.target.value || "decoded.bin")
-            }
+            maxLength={120}
+            placeholder="decoded.bin"
+            onChange={(event) => setFileName(event.target.value)}
           />
         </label>
       )}
@@ -391,6 +450,7 @@ function RegexTool() {
     }
     if (input.length > 1_000_000) {
       setError("Use sample text under 1 MB.");
+      setRunning(false);
       return;
     }
     setRunning(true);

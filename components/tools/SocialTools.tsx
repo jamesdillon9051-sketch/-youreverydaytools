@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type MouseEvent,
+} from "react";
+import {
+  ChevronRight,
   Download,
-  ExternalLink,
   ImageIcon,
   LoaderCircle,
   RefreshCw,
@@ -12,57 +18,85 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { downloadBlob, errorMessage, formatBytes } from "@/lib/browser";
+import { downloadBlob, errorMessage, formatBytes, toBlob } from "@/lib/browser";
 import {
+  MAX_ZIP_BYTES,
+  MAX_ZIP_FILES,
+  SocialHttpError,
+  fetchSocialMedia,
+  isSocialSlug,
+  mediaFilename,
+  parseSocialResult,
+  parseSocialStatus,
+  readSocialJson,
   socialModes,
   validateSocialInput,
+  type SocialAsset,
+  type SocialCollection,
   type SocialPlatform,
   type SocialResult,
   type SocialSlug,
   type SocialStatus,
 } from "@/lib/social";
+import { ProgressBar, StatusNotice } from "./Shared";
 
-async function readJson(response: Response) {
-  if (!response.headers.get("content-type")?.includes("application/json"))
-    throw new Error(
-      "The download service is not available yet. Please try again after site activation.",
-    );
-  const data = await response.json();
-  if (!response.ok)
-    throw new Error(
-      typeof data.error === "string"
-        ? data.error
-        : "The download service could not complete this request.",
-    );
-  return data;
-}
-function safeDownload(url: string) {
-  return (
-    url.startsWith("/api/social-download.php?token=") && !/[\r\n]/.test(url)
-  );
+type Transfer = { label: string; value?: number; detail?: string };
+// The gateway fetches the whole file before it sends the first byte, so a
+// download can sit at zero for a while; say so instead of looking frozen.
+const waiting = "Waiting for the server…";
+
+function joinChunks(chunks: Uint8Array[], size: number) {
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return bytes;
 }
 
 export default function SocialTools({ mode }: { mode: string }) {
-  const settings = socialModes[mode as SocialSlug];
+  if (!isSocialSlug(mode))
+    return (
+      <p
+        role="alert"
+        className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300"
+      >
+        This downloader is not available.
+      </p>
+    );
+  return <SocialDownloader key={mode} mode={mode} />;
+}
+
+function SocialDownloader({ mode }: { mode: SocialSlug }) {
+  const settings = socialModes[mode];
   const [platform, setPlatform] = useState<SocialPlatform>(settings.platform);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<SocialStatus | null>(null);
   const [statusError, setStatusError] = useState("");
   const [statusAttempt, setStatusAttempt] = useState(0);
   const [result, setResult] = useState<SocialResult | null>(null);
+  const [collections, setCollections] = useState<SocialCollection[]>([]);
+  const [activeCollection, setActiveCollection] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [zipping, setZipping] = useState(false);
+  const [saving, setSaving] = useState<string | null>(null);
+  const [transfer, setTransfer] = useState<Transfer | null>(null);
   const [progress, setProgress] = useState("");
+  const [expired, setExpired] = useState(false);
   const request = useRef<AbortController | null>(null);
+  const lastQuery = useRef({ value: "", fromCollection: false });
   useEffect(() => {
     const controller = new AbortController();
     setStatus(null);
     setStatusError("");
     fetch("/api/social.php", { signal: controller.signal, cache: "no-store" })
-      .then(readJson)
+      .then(readSocialJson)
+      .then(parseSocialStatus)
       .then(setStatus)
       .catch((e) => {
         if (!controller.signal.aborted) setStatusError(errorMessage(e));
@@ -70,17 +104,7 @@ export default function SocialTools({ mode }: { mode: string }) {
     return () => controller.abort();
   }, [statusAttempt]);
   useEffect(() => () => request.current?.abort(), []);
-  useEffect(() => {
-    request.current?.abort();
-    setPlatform(settings.platform);
-    setInput("");
-    setResult(null);
-    setSelected([]);
-    setError("");
-    setBusy(false);
-    setZipping(false);
-    setProgress("");
-  }, [mode, settings.platform]);
+  const working = busy || zipping || saving !== null;
   const available =
     status?.ready &&
     (settings.mode === "stories"
@@ -89,8 +113,16 @@ export default function SocialTools({ mode }: { mode: string }) {
   const visible =
     result?.items.filter((item) => filter === "all" || item.kind === filter) ??
     [];
-  async function findMedia(value = input) {
+  function noteFailure(failure: unknown) {
+    setError(errorMessage(failure));
+    if (failure instanceof SocialHttpError && failure.status === 410)
+      setExpired(true);
+  }
+  async function findMedia(value = input, fromCollection = false) {
     setError("");
+    setNotice("");
+    setProgress("");
+    setExpired(false);
     let clean: string;
     try {
       clean = validateSocialInput(platform, settings.mode, value);
@@ -101,10 +133,19 @@ export default function SocialTools({ mode }: { mode: string }) {
     request.current?.abort();
     const controller = new AbortController();
     request.current = controller;
+    lastQuery.current = { value: clean, fromCollection };
     setBusy(true);
+    setZipping(false);
+    setSaving(null);
     setResult(null);
     setSelected([]);
-    setProgress("");
+    setFilter("all");
+    setTransfer({ label: "Looking up public media…" });
+    // A highlight lookup keeps the list so a failure never costs another query.
+    if (!fromCollection) {
+      setCollections([]);
+      setActiveCollection("");
+    }
     try {
       const response = await fetch("/api/social.php", {
         method: "POST",
@@ -112,19 +153,17 @@ export default function SocialTools({ mode }: { mode: string }) {
         body: JSON.stringify({ platform, mode: settings.mode, input: clean }),
         signal: controller.signal,
       });
-      const data: SocialResult = await readJson(response);
-      if (
-        !Array.isArray(data.items) ||
-        data.items.some((item) => !safeDownload(item.downloadUrl))
-      )
-        throw new Error("The service returned an invalid download response.");
+      const data = parseSocialResult(await readSocialJson(response));
+      if (controller.signal.aborted) return;
       setResult(data);
       setSelected(data.items.map((item) => item.id));
+      if (data.collections?.length) setCollections(data.collections);
     } catch (e) {
-      if (!controller.signal.aborted) setError(errorMessage(e));
+      if (!controller.signal.aborted) noteFailure(e);
     } finally {
       if (request.current === controller) {
         setBusy(false);
+        setTransfer(null);
         request.current = null;
       }
     }
@@ -138,15 +177,67 @@ export default function SocialTools({ mode }: { mode: string }) {
     request.current = null;
     setBusy(false);
     setZipping(false);
+    setSaving(null);
+    setTransfer(null);
+    setNotice("");
     setProgress("Canceled.");
+  }
+  async function saveItem(item: SocialAsset) {
+    if (working) return;
+    const controller = new AbortController();
+    request.current = controller;
+    setSaving(item.id);
+    setError("");
+    setNotice("");
+    setProgress("");
+    const label = `Downloading ${item.filename}`;
+    setTransfer({ label, detail: waiting });
+    try {
+      const media = await fetchSocialMedia(item.downloadUrl, {
+        signal: controller.signal,
+        onProgress: (loaded, total) =>
+          setTransfer({
+            label,
+            value: total ? (loaded / total) * 100 : undefined,
+            detail: total
+              ? `${formatBytes(loaded)} of ${formatBytes(total)}`
+              : formatBytes(loaded),
+          }),
+      });
+      if (controller.signal.aborted) return;
+      const name = mediaFilename(item.filename, media.extension);
+      downloadBlob(new Blob(media.chunks, { type: media.mime }), name);
+      setNotice(`Saved ${name} (${formatBytes(media.size)}).`);
+    } catch (e) {
+      if (!controller.signal.aborted) noteFailure(e);
+    } finally {
+      if (request.current === controller) {
+        setSaving(null);
+        setTransfer(null);
+        request.current = null;
+      }
+    }
+  }
+  function startDownload(event: MouseEvent, item: SocialAsset) {
+    // Modified clicks (new tab, save as) keep the plain link behavior.
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    event.preventDefault();
+    void saveItem(item);
   }
   async function downloadZip() {
     const items =
       result?.items.filter((item) => selected.includes(item.id)) ?? [];
-    if (!items.length) return;
-    if (items.length > 30) {
+    if (!items.length || working) return;
+    if (items.length > MAX_ZIP_FILES) {
       setError(
-        "Select up to 30 files per ZIP. You can also download files individually.",
+        `Select up to ${MAX_ZIP_FILES} files per ZIP. You can also download files individually.`,
       );
       return;
     }
@@ -154,77 +245,40 @@ export default function SocialTools({ mode }: { mode: string }) {
     request.current = controller;
     setZipping(true);
     setError("");
+    setNotice("");
+    setProgress("");
     try {
       const entries: Record<string, Uint8Array> = {};
       let total = 0;
       for (let index = 0; index < items.length; index++) {
-        const item = items[index];
-        setProgress(
-          `Downloading ${index + 1} of ${items.length}… ${formatBytes(total)}`,
-        );
-        const response = await fetch(item.downloadUrl, {
-          signal: controller.signal,
-          cache: "no-store",
+        const label = `Downloading file ${index + 1} of ${items.length}`;
+        setTransfer({
+          label,
+          value: index ? (index / items.length) * 100 : undefined,
+          detail: index ? formatBytes(total) : waiting,
         });
-        if (!response.ok) {
-          await readJson(response);
-          throw new Error("The media download failed. Fetch the post again.");
-        }
-        if (
-          !/^(image\/(jpeg|png|webp|gif|avif)|video\/mp4)(;|$)/.test(
-            response.headers.get("content-type") ?? "",
-          )
-        )
-          throw new Error("The service returned an unsupported file.");
-        const announced = Number(response.headers.get("content-length") || 0);
-        if (announced + total > 64 * 1024 * 1024)
-          throw new Error(
+        const media = await fetchSocialMedia(items[index].downloadUrl, {
+          signal: controller.signal,
+          maxBytes: MAX_ZIP_BYTES - total,
+          limitMessage:
             "ZIP downloads are limited to 64 MB in total. Download larger files individually.",
-          );
-        if (!response.body)
-          throw new Error("Your browser could not read this download.");
-        const reader = response.body.getReader();
-        const chunks: Uint8Array[] = [];
-        let size = 0;
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            total += value.length;
-            size += value.length;
-            if (total > 64 * 1024 * 1024) {
-              await reader.cancel();
-              throw new Error(
-                "ZIP downloads are limited to 64 MB in total. Download larger files individually.",
-              );
-            }
-            chunks.push(value);
-          }
-        } finally {
-          reader.releaseLock();
-        }
-        const bytes = new Uint8Array(size);
-        let offset = 0;
-        for (const chunk of chunks) {
-          bytes.set(chunk, offset);
-          offset += chunk.length;
-        }
-        const mime = response.headers.get("content-type")!.split(";")[0];
-        const extensions: Record<string, string> = {
-          "image/jpeg": "jpg",
-          "image/png": "png",
-          "image/webp": "webp",
-          "image/gif": "gif",
-          "image/avif": "avif",
-          "video/mp4": "mp4",
-        };
-        const basename = item.filename
-          .replace(/[^a-zA-Z0-9_.-]/g, "-")
-          .replace(/\.[^.]+$/, "");
-        entries[`${index + 1}-${basename}.${extensions[mime]}`] = bytes;
+          onProgress: (loaded, announced) =>
+            setTransfer({
+              label,
+              value:
+                ((index + (announced ? loaded / announced : 0)) /
+                  items.length) *
+                100,
+              detail: formatBytes(total + loaded),
+            }),
+        });
+        total += media.size;
+        entries[
+          `${index + 1}-${mediaFilename(items[index].filename, media.extension)}`
+        ] = joinChunks(media.chunks, media.size);
       }
       if (controller.signal.aborted) return;
-      setProgress("Preparing ZIP…");
+      setTransfer({ label: "Preparing ZIP…" });
       const { zip } = await import("fflate");
       const bytes = await new Promise<Uint8Array>((resolve, reject) => {
         const terminate = zip(entries, { level: 0 }, (e, data) => {
@@ -239,19 +293,17 @@ export default function SocialTools({ mode }: { mode: string }) {
         controller.signal.addEventListener("abort", abort, { once: true });
       });
       if (controller.signal.aborted) return;
-      downloadBlob(
-        new Blob([new Uint8Array(bytes)], { type: "application/zip" }),
-        `${platform}-media.zip`,
+      const name = `${platform}-media.zip`;
+      downloadBlob(toBlob(bytes, "application/zip"), name);
+      setNotice(
+        `Saved ${name} with ${items.length} file${items.length === 1 ? "" : "s"} (${formatBytes(total)}).`,
       );
-      setProgress(`Downloaded ${items.length} files (${formatBytes(total)}).`);
     } catch (e) {
-      if (!controller.signal.aborted) {
-        setError(errorMessage(e));
-        setProgress("");
-      }
+      if (!controller.signal.aborted) noteFailure(e);
     } finally {
       if (request.current === controller) {
         setZipping(false);
+        setTransfer(null);
         request.current = null;
       }
     }
@@ -300,7 +352,9 @@ export default function SocialTools({ mode }: { mode: string }) {
               onChange={(e) => {
                 setPlatform(e.target.value as SocialPlatform);
                 setResult(null);
+                setCollections([]);
                 setError("");
+                setNotice("");
               }}
             >
               <option value="instagram">Instagram</option>
@@ -324,7 +378,9 @@ export default function SocialTools({ mode }: { mode: string }) {
           placeholder={settings.hint}
           maxLength={2048}
           autoComplete="off"
+          autoCapitalize="none"
           spellCheck={false}
+          inputMode="url"
           disabled={busy || zipping}
           required
         />
@@ -332,7 +388,7 @@ export default function SocialTools({ mode }: { mode: string }) {
           <button
             className="btn"
             type="submit"
-            disabled={!available || busy || zipping}
+            disabled={!available || working}
           >
             {busy ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -341,7 +397,7 @@ export default function SocialTools({ mode }: { mode: string }) {
             )}{" "}
             {settings.mode === "highlights" ? "Find highlights" : "Find media"}
           </button>
-          {(busy || zipping) && (
+          {working && (
             <button type="button" className="btn-secondary" onClick={cancel}>
               <X className="h-4 w-4" /> Cancel
             </button>
@@ -356,23 +412,58 @@ export default function SocialTools({ mode }: { mode: string }) {
           {error}
         </p>
       )}
-      {result?.collections && result.collections.length > 0 && (
+      {expired && (
+        <StatusNotice tone="warning">
+          <p>Download links expire 15 minutes after they are created.</p>
+          <button
+            type="button"
+            className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-violet-700 disabled:opacity-50 dark:text-violet-300"
+            disabled={working}
+            onClick={() =>
+              void findMedia(
+                lastQuery.current.value,
+                lastQuery.current.fromCollection,
+              )
+            }
+          >
+            <RefreshCw className="h-3 w-3" /> Fetch media again
+          </button>
+        </StatusNotice>
+      )}
+      {transfer && (
+        <ProgressBar
+          label={transfer.label}
+          value={transfer.value}
+          detail={transfer.detail}
+        />
+      )}
+      {notice && <StatusNotice>{notice}</StatusNotice>}
+      {progress && (
+        <p className="muted text-xs" role="status" aria-live="polite">
+          {progress}
+        </p>
+      )}
+      {collections.length > 0 && (
         <section className="space-y-3">
           <h3 className="text-sm font-semibold">Choose a highlight</h3>
           <div className="grid gap-3 sm:grid-cols-2">
-            {result.collections.map((collection) => (
+            {collections.map((collection) => (
               <button
+                type="button"
                 key={collection.id}
-                className="btn-secondary justify-between"
-                disabled={busy || zipping}
-                onClick={() =>
-                  findMedia(
+                className={`btn-secondary justify-between ${activeCollection === collection.id ? "!border-violet-400 ring-2 ring-violet-200 dark:ring-violet-900" : ""}`}
+                aria-pressed={activeCollection === collection.id}
+                disabled={working}
+                onClick={() => {
+                  setActiveCollection(collection.id);
+                  void findMedia(
                     `https://www.instagram.com/stories/highlights/${collection.id}/`,
-                  )
-                }
+                    true,
+                  );
+                }}
               >
-                {collection.title}
-                <ExternalLink className="h-4 w-4" />
+                <span className="truncate">{collection.title}</span>
+                <ChevronRight className="h-4 w-4 shrink-0" />
               </button>
             ))}
           </div>
@@ -429,8 +520,9 @@ export default function SocialTools({ mode }: { mode: string }) {
               Select visible files
             </label>
             <button
+              type="button"
               className="btn-secondary ml-auto"
-              disabled={!selected.length || zipping || busy}
+              disabled={!selected.length || working}
               onClick={downloadZip}
             >
               {zipping ? (
@@ -448,14 +540,13 @@ export default function SocialTools({ mode }: { mode: string }) {
                 className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
               >
                 <div className="flex aspect-[4/3] items-center justify-center bg-slate-100 dark:bg-slate-800">
-                  {item.previewUrl?.startsWith(
-                    "/api/social-download.php?inline=1&token=",
-                  ) ? (
+                  {item.previewUrl ? (
                     <img
                       src={item.previewUrl}
                       alt={`Preview of ${item.filename}`}
                       className="h-full w-full object-contain"
                       loading="lazy"
+                      decoding="async"
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         e.currentTarget.style.visibility = "hidden";
@@ -491,12 +582,19 @@ export default function SocialTools({ mode }: { mode: string }) {
                   </p>
                   {item.note && <p className="muted text-xs">{item.note}</p>}
                   <a
-                    className="btn-secondary w-full"
+                    className={`btn-secondary w-full ${working && saving !== item.id ? "pointer-events-none opacity-50" : ""}`}
                     href={item.downloadUrl}
                     download={item.filename}
                     rel="nofollow"
+                    aria-disabled={working && saving !== item.id}
+                    onClick={(event) => startDownload(event, item)}
                   >
-                    <Download className="h-4 w-4" /> Download {item.kind}
+                    {saving === item.id ? (
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}{" "}
+                    Download {item.kind}
                   </a>
                 </div>
               </article>
@@ -508,16 +606,11 @@ export default function SocialTools({ mode }: { mode: string }) {
             </p>
           )}
           <p className="muted text-xs">
-            Individual files: up to 128 MB. ZIP: up to 30 selected files and 64
-            MB. Availability, resolution, audio, and watermarks depend on the
-            platform and provider.
+            Individual files: up to 128 MB. ZIP: up to {MAX_ZIP_FILES} selected
+            files and 64 MB. Availability, resolution, audio, and watermarks
+            depend on the platform and provider.
           </p>
         </section>
-      )}
-      {progress && (
-        <p className="muted text-xs" role="status" aria-live="polite">
-          {progress}
-        </p>
       )}
     </div>
   );

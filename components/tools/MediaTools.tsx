@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, Lock, Unlock } from "lucide-react";
+import { Download, LoaderCircle, Lock, Unlock, X } from "lucide-react";
 import {
   canvasBlob,
   createCanvas,
@@ -9,13 +9,17 @@ import {
   errorMessage,
   formatBytes,
   loadImage,
+  toBlob,
 } from "@/lib/browser";
+import { sniffImage } from "@/lib/files";
 import {
   BusyLabel,
   ErrorNotice,
   FileDropzone,
   FileList,
   NumberField,
+  ProgressBar,
+  StatusNotice,
 } from "./Shared";
 
 type Result = {
@@ -25,6 +29,11 @@ type Result = {
   width: number;
   height: number;
   url: string;
+};
+const formatNames: Record<string, string> = {
+  "image/jpeg": "JPG",
+  "image/png": "PNG",
+  "image/webp": "WebP",
 };
 export default function MediaTools({ mode }: { mode: string }) {
   const [files, setFiles] = useState<File[]>([]);
@@ -37,8 +46,14 @@ export default function MediaTools({ mode }: { mode: string }) {
   const [locked, setLocked] = useState(true);
   const [results, setResults] = useState<Result[]>([]);
   const [busy, setBusy] = useState(false);
+  const [zipping, setZipping] = useState(false);
   const [error, setError] = useState("");
-  const [progress, setProgress] = useState("");
+  const [notice, setNotice] = useState("");
+  const [warning, setWarning] = useState("");
+  const [progress, setProgress] = useState<{
+    label: string;
+    value: number;
+  } | null>(null);
   const urls = useRef<string[]>([]);
   const generation = useRef(0);
   useEffect(
@@ -48,24 +63,49 @@ export default function MediaTools({ mode }: { mode: string }) {
     },
     [],
   );
-  function addFiles(incoming: File[]) {
-    const supported = incoming.filter(
-      (file) =>
+  async function addFiles(incoming: File[]) {
+    const supported: File[] = [];
+    const rejected: string[] = [];
+    for (const file of incoming) {
+      const named =
         /image\/(jpeg|png|webp)/.test(file.type) ||
-        /\.(jpe?g|png|webp)$/i.test(file.name),
-    );
+        /\.(jpe?g|png|webp)$/i.test(file.name);
+      // Trust the file's bytes, not its extension.
+      let valid = false;
+      if (named) {
+        try {
+          valid = !!sniffImage(
+            new Uint8Array(await file.slice(0, 32).arrayBuffer()),
+          );
+        } catch {
+          valid = false;
+        }
+      }
+      if (valid) supported.push(file);
+      else rejected.push(file.name);
+    }
     setError(
-      supported.length !== incoming.length
-        ? "Only JPG, PNG, and WebP images are supported."
+      rejected.length
+        ? `Only JPG, PNG, and WebP images are supported. Skipped: ${rejected.slice(0, 3).join(", ")}${rejected.length > 3 ? ` and ${rejected.length - 3} more` : ""}.`
         : "",
     );
     setFiles((current) => [...current, ...supported]);
+  }
+  function cancel() {
+    generation.current++;
+    setBusy(false);
+    setProgress(null);
+    setNotice("Canceled. No images were changed.");
   }
   async function process(q = quality) {
     const id = ++generation.current;
     setBusy(true);
     setError("");
+    setNotice("");
+    setWarning("");
     const next: Result[] = [];
+    const failures: { name: string; reason: string }[] = [];
+    let substituted = false;
     try {
       if (
         mode === "image-resizer" &&
@@ -77,96 +117,140 @@ export default function MediaTools({ mode }: { mode: string }) {
         throw new Error("Enter positive width and height values.");
       for (let i = 0; i < files.length; i++) {
         if (id !== generation.current) return;
-        setProgress(`Image ${i + 1} of ${files.length}`);
         const file = files[i];
-        const image = await loadImage(file);
-        let w = image.naturalWidth,
-          h = image.naturalHeight;
-        if (mode === "image-resizer") {
-          const scale = Math.min(width / w, height / h);
-          w = locked ? Math.max(1, Math.round(w * scale)) : Math.round(width);
-          h = locked ? Math.max(1, Math.round(h * scale)) : Math.round(height);
-        }
-        const { canvas, context } = createCanvas(w, h);
-        if (format === "image/jpeg") {
-          context.fillStyle = "#ffffff";
-          context.fillRect(0, 0, w, h);
-        }
-        context.drawImage(image, 0, 0, w, h);
-        let blob: Blob;
-        if (mode === "image-compressor" && format !== "image/png") {
-          const { default: imageCompression } =
-            await import("browser-image-compression");
-          const rendered = await canvasBlob(canvas, "image/png");
-          blob = await imageCompression(
-            new File([rendered], "source.png", { type: "image/png" }),
-            {
-              initialQuality: q / 100,
-              fileType: format,
-              maxIteration: 1,
-              useWebWorker: false,
-              alwaysKeepResolution: true,
-            },
-          );
-        } else blob = await canvasBlob(canvas, format, q / 100);
-        if (
-          mode === "image-compressor" &&
-          format === "image/png" &&
-          file.type === "image/png" &&
-          blob.size >= file.size
-        )
-          blob = file;
-        const actualExtension =
-          blob.type === "image/jpeg"
-            ? "jpg"
-            : blob.type === "image/webp"
-              ? "webp"
-              : "png";
-        next.push({
-          name: `${file.name.replace(/\.[^.]+$/, "")}-${i + 1}.${actualExtension}`,
-          blob,
-          before: file.size,
-          width: w,
-          height: h,
-          url: "",
+        setProgress({
+          label: `Processing ${file.name} (${i + 1} of ${files.length})`,
+          value: (i / files.length) * 100,
         });
-        canvas.width = 0;
-        canvas.height = 0;
+        // Let the browser paint the progress before the heavy decode.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        try {
+          const image = await loadImage(file);
+          let w = image.naturalWidth,
+            h = image.naturalHeight;
+          if (mode === "image-resizer") {
+            const scale = Math.min(width / w, height / h);
+            w = locked ? Math.max(1, Math.round(w * scale)) : Math.round(width);
+            h = locked
+              ? Math.max(1, Math.round(h * scale))
+              : Math.round(height);
+          }
+          const { canvas, context } = createCanvas(w, h);
+          let blob: Blob;
+          try {
+            if (format === "image/jpeg") {
+              context.fillStyle = "#ffffff";
+              context.fillRect(0, 0, w, h);
+            }
+            context.drawImage(image, 0, 0, w, h);
+            if (mode === "image-compressor" && format !== "image/png") {
+              const { default: imageCompression } =
+                await import("browser-image-compression");
+              const rendered = await canvasBlob(canvas, "image/png");
+              blob = await imageCompression(
+                new File([rendered], "source.png", { type: "image/png" }),
+                {
+                  initialQuality: q / 100,
+                  fileType: format,
+                  maxIteration: 1,
+                  useWebWorker: false,
+                  alwaysKeepResolution: true,
+                },
+              );
+            } else blob = await canvasBlob(canvas, format, q / 100);
+          } finally {
+            canvas.width = 0;
+            canvas.height = 0;
+          }
+          if (id !== generation.current) return;
+          if (
+            mode === "image-compressor" &&
+            format === "image/png" &&
+            file.type === "image/png" &&
+            blob.size >= file.size
+          )
+            blob = file;
+          else if (blob.type !== format) substituted = true;
+          const actualExtension =
+            blob.type === "image/jpeg"
+              ? "jpg"
+              : blob.type === "image/webp"
+                ? "webp"
+                : "png";
+          next.push({
+            name: `${file.name.replace(/\.[^.]+$/, "")}-${i + 1}.${actualExtension}`,
+            blob,
+            before: file.size,
+            width: w,
+            height: h,
+            url: "",
+          });
+        } catch (failure) {
+          failures.push({ name: file.name, reason: errorMessage(failure) });
+        }
       }
       if (id !== generation.current) return;
       urls.current.forEach((url) => URL.revokeObjectURL(url));
       for (const result of next) result.url = URL.createObjectURL(result.blob);
       urls.current = next.map((result) => result.url);
       setResults(next);
+      if (failures.length)
+        setError(
+          `${failures.length} of ${files.length} ${files.length === 1 ? "file" : "files"} could not be processed. ${failures
+            .slice(0, 3)
+            .map(
+              ({ name, reason }) =>
+                `${name}: ${/[.!?]$/.test(reason) ? reason : `${reason}.`}`,
+            )
+            .join(
+              " ",
+            )}${failures.length > 3 ? ` ${failures.length - 3} more failed.` : ""}`,
+        );
+      if (next.length) {
+        const before = next.reduce((sum, result) => sum + result.before, 0);
+        const after = next.reduce((sum, result) => sum + result.blob.size, 0);
+        setNotice(
+          `Processed ${next.length} ${next.length === 1 ? "image" : "images"}: ${formatBytes(before)} → ${formatBytes(after)}.`,
+        );
+      }
+      if (substituted)
+        setWarning(
+          `Your browser cannot save ${formatNames[format] ?? "that format"}, so those images were saved as PNG instead.`,
+        );
     } catch (failure) {
       if (id === generation.current) setError(errorMessage(failure));
     } finally {
       if (id === generation.current) {
         setBusy(false);
-        setProgress("");
+        setProgress(null);
       }
     }
   }
   async function downloadAll() {
+    setZipping(true);
+    setError("");
     try {
-      const { zipSync } = await import("fflate");
+      const { zip } = await import("fflate");
       const entries: Record<string, Uint8Array> = {};
       for (const result of results)
         entries[result.name] = new Uint8Array(await result.blob.arrayBuffer());
-      const zip = zipSync(entries, { level: 0 });
-      downloadBlob(
-        new Blob([new Uint8Array(zip)], { type: "application/zip" }),
-        "localtools-images.zip",
+      const bytes = await new Promise<Uint8Array>((resolve, reject) =>
+        zip(entries, { level: 0 }, (failure, data) =>
+          failure ? reject(failure) : resolve(data),
+        ),
       );
+      downloadBlob(toBlob(bytes, "application/zip"), "localtools-images.zip");
     } catch (failure) {
       setError(errorMessage(failure));
+    } finally {
+      setZipping(false);
     }
   }
   return (
     <div className="space-y-5">
       <FileDropzone
         accept="image/webp,image/jpeg,image/png"
-        onFiles={addFiles}
+        onFiles={(incoming) => void addFiles(incoming)}
         disabled={busy}
         hint="JPG, PNG, WebP · Batch processing supported"
       />
@@ -256,6 +340,7 @@ export default function MediaTools({ mode }: { mode: string }) {
             />
           </div>
           <button
+            type="button"
             onClick={() => setLocked(!locked)}
             className="btn-secondary"
             aria-pressed={locked}
@@ -273,6 +358,7 @@ export default function MediaTools({ mode }: { mode: string }) {
       )}
       <div className="flex flex-wrap items-center gap-3">
         <button
+          type="button"
           onClick={() => void process()}
           disabled={!files.length || busy}
           className="btn"
@@ -288,20 +374,33 @@ export default function MediaTools({ mode }: { mode: string }) {
             }
           />
         </button>
-        {results.length > 0 && (
-          <button
-            onClick={() => void downloadAll()}
-            className="btn-secondary"
-            disabled={busy}
-          >
-            <Download className="h-4 w-4" /> Download ZIP
+        {busy && (
+          <button type="button" className="btn-secondary" onClick={cancel}>
+            <X className="h-4 w-4" /> Cancel
           </button>
         )}
-        <span className="muted text-xs" role="status">
-          {progress}
-        </span>
+        {results.length > 0 && (
+          <button
+            type="button"
+            onClick={() => void downloadAll()}
+            className="btn-secondary"
+            disabled={busy || zipping}
+          >
+            {zipping ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}{" "}
+            Download ZIP
+          </button>
+        )}
       </div>
+      {progress && (
+        <ProgressBar label={progress.label} value={progress.value} />
+      )}
       <ErrorNotice message={error} />
+      {notice && <StatusNotice>{notice}</StatusNotice>}
+      {warning && <StatusNotice tone="warning">{warning}</StatusNotice>}
       {results.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold">Processed images</h2>
@@ -332,6 +431,7 @@ export default function MediaTools({ mode }: { mode: string }) {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => downloadBlob(result.blob, result.name)}
                 className="btn-secondary"
                 aria-label={`Download ${result.name}`}

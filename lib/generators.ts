@@ -38,6 +38,36 @@ export function generatePassword(
   }
 }
 
+function luminance(hex: string) {
+  const [r, g, b] = [1, 3, 5].map((start) => {
+    const channel = parseInt(hex.slice(start, start + 2), 16) / 255;
+    return channel <= 0.03928
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+/** WCAG contrast ratio between two #rrggbb colors (1 to 21). */
+export function contrastRatio(first: string, second: string) {
+  const [lighter, darker] = [luminance(first), luminance(second)].sort(
+    (a, b) => b - a,
+  );
+  return (lighter + 0.05) / (darker + 0.05);
+}
+/** A warning when QR colors are likely to scan badly, otherwise an empty string. */
+export function qrColorAdvice(foreground: string, background: string) {
+  if (
+    !/^#[0-9a-f]{6}$/i.test(foreground) ||
+    !/^#[0-9a-f]{6}$/i.test(background)
+  )
+    return "";
+  if (contrastRatio(foreground, background) < 3)
+    return "These colors are too similar. Many scanners will not read the code; use a dark foreground on a light background.";
+  if (luminance(foreground) > luminance(background))
+    return "A light code on a dark background (inverted) is not read by some scanners. Test it, or swap the colors.";
+  return "";
+}
+
 export const unitGroups: Record<
   string,
   Record<string, { name: string; factor: number }>

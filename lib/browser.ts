@@ -8,15 +8,62 @@ export function downloadBlob(blob: Blob, filename: string) {
   anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
+/**
+ * Wrap bytes in a Blob without copying them. TypeScript only accepts
+ * ArrayBuffer-backed views as BlobParts, and every producer used here
+ * (pdf-lib, fflate, TextEncoder) returns ArrayBuffer-backed arrays.
+ */
+export function toBlob(bytes: Uint8Array, type: string): Blob {
+  return new Blob([bytes as Uint8Array<ArrayBuffer>], { type });
+}
 export function formatBytes(bytes: number) {
-  if (bytes === 0) return "0 B";
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), 3);
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const i = Math.min(
+    Math.max(Math.floor(Math.log(bytes) / Math.log(1024)), 0),
+    3,
+  );
   return `${(bytes / 1024 ** i).toFixed(i ? 1 : 0)} ${["B", "KB", "MB", "GB"][i]}`;
 }
+export function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
+}
+/**
+ * Turn the failures browsers actually throw (out of memory, unreadable files,
+ * dropped connections) into messages a person can act on. Messages written by
+ * this app, and parser messages such as JSON.parse errors, pass through.
+ */
 export function errorMessage(error: unknown) {
-  return error instanceof Error
-    ? error.message
-    : "Processing failed. Please try another file.";
+  if (!(error instanceof Error))
+    return "Processing failed. Please try another file.";
+  if (error instanceof RangeError && /call stack/i.test(error.message))
+    return "This data is nested too deeply to process.";
+  if (
+    error instanceof RangeError &&
+    /allocation|array length|out of memory|buffer/i.test(error.message)
+  )
+    return "This is too large for your browser's available memory. Try a smaller file, or close other tabs and try again.";
+  if (error.name === "QuotaExceededError")
+    return "Your browser ran out of storage or memory while working. Try smaller files or close other tabs.";
+  if (error.name === "NotReadableError" || error.name === "NotFoundError")
+    return "This file could not be read. It may have been moved or deleted, or it may still be syncing from cloud storage.";
+  if (
+    error instanceof TypeError &&
+    /failed to fetch|networkerror|load failed|network request failed/i.test(
+      error.message,
+    )
+  )
+    return "Network error. Check your connection and try again.";
+  return error.message || "Processing failed. Please try another file.";
+}
+/** Keep a user-chosen name safe and portable across operating systems. */
+export function sanitizeFilename(name: string, fallback: string) {
+  const cleaned = name
+    .replace(/[\u0000-\u001f\u007f<>:"/\\|?*]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^[.\s-]+|[.\s]+$/g, "")
+    .slice(0, 120);
+  return cleaned || fallback;
 }
 export function loadImage(file: Blob): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -74,7 +121,13 @@ export function createCanvas(width: number, height: number) {
   canvas.width = Math.round(width);
   canvas.height = Math.round(height);
   const context = canvas.getContext("2d");
-  if (!context) throw new Error("Canvas is unavailable in this browser.");
+  if (!context)
+    throw new Error(
+      "Canvas is unavailable in this browser, or the image is too large for its memory limit.",
+    );
+  // Downscaling with the default (low) smoothing produces visible aliasing.
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
   return { canvas, context };
 }
 export function bytesToBase64(bytes: Uint8Array): string {
@@ -99,5 +152,7 @@ export function base64ToBytes(input: string): Uint8Array<ArrayBuffer> {
   if (!text.includes("="))
     text = text.padEnd(Math.ceil(text.length / 4) * 4, "=");
   const decoded = atob(text);
-  return Uint8Array.from(decoded, (character) => character.charCodeAt(0));
+  const bytes = new Uint8Array(decoded.length);
+  for (let i = 0; i < decoded.length; i++) bytes[i] = decoded.charCodeAt(i);
+  return bytes;
 }
