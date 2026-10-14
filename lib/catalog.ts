@@ -16,14 +16,27 @@ export function externalAppUrl(value: string | undefined) {
     return "";
   }
 }
+/** Where the Micro Finance app is served inside this site (public/finance/). */
+export const microFinancePath = "/finance/";
 /**
- * Where the separately hosted Micro Finance app lives. Set
- * NEXT_PUBLIC_MICRO_FINANCE_URL when building; until then its page says the app
- * is not live yet instead of linking to an address that does not exist.
+ * The address behind "Open Micro Finance". The app ships inside this site, so by
+ * default that is its own folder. Set NEXT_PUBLIC_MICRO_FINANCE_URL (https only)
+ * when building to send visitors to a copy hosted on its own address instead.
  */
-export const microFinanceUrl = externalAppUrl(
-  process.env.NEXT_PUBLIC_MICRO_FINANCE_URL,
-);
+export const microFinanceUrl =
+  externalAppUrl(process.env.NEXT_PUBLIC_MICRO_FINANCE_URL) || microFinancePath;
+/**
+ * Whether an address is on this site's own origin. An app served from there
+ * shares its browser storage with every script that runs on the site's pages.
+ */
+export function sharesSiteOrigin(url: string) {
+  if (url.startsWith("/")) return true;
+  try {
+    return new URL(url).origin === new URL(siteUrl).origin;
+  } catch {
+    return false;
+  }
+}
 export const categories = [
   {
     slug: "media",
@@ -484,7 +497,10 @@ export const tools: Tool[] = [
       {
         question: "Is my financial data uploaded anywhere?",
         answer:
-          "No. Micro Finance has no server, accounts or sync, and it never sends your budget anywhere. Your data is stored in your browser on the device you use, so clearing that browser's site data erases it. Use Backup & Restore to keep a copy.",
+          "No. Micro Finance has no server, accounts or sync, and it never sends your budget anywhere. Your data is stored in your browser on the device you use, so clearing that browser's site data erases it. Use Backup & Restore to keep a copy." +
+          (sharesSiteOrigin(microFinanceUrl)
+            ? " It opens from this site's own address, so scripts that run on the site's other pages (analytics and ads) share the browser storage it uses."
+            : ""),
       },
       {
         question: "Does it work offline, and can I install it?",

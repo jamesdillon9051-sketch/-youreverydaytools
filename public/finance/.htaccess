@@ -1,0 +1,7 @@
+# Micro Finance: the page, its service worker and its manifest are always revalidated,
+# so a new release reaches installed copies. Files under assets/ never change (see assets/.htaccess).
+<IfModule mod_headers.c>
+  <FilesMatch "^(index\.html|sw\.js|manifest\.json)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>

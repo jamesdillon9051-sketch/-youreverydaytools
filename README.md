@@ -1,6 +1,6 @@
 # LocalTools
 
-A complete Next.js App Router and Tailwind CSS utility suite. The original 15 utilities process inputs in the browser. Nine social downloaders use a standalone PHP gateway on Hostinger shared hosting with external provider APIs. The frontend remains a Next.js static export, with no Node.js runtime or database on Hostinger. Micro Finance, a separately hosted offline budgeting app, is listed alongside the calculators; see [Micro Finance](docs/micro-finance.md).
+A complete Next.js App Router and Tailwind CSS utility suite. The original 15 utilities process inputs in the browser. Nine social downloaders use a standalone PHP gateway on Hostinger shared hosting with external provider APIs. The frontend remains a Next.js static export, with no Node.js runtime or database on Hostinger. Micro Finance, an offline budgeting app, ships inside the site at `/finance/` and is listed alongside the calculators; see [Micro Finance](docs/micro-finance.md).
 
 ## Start locally
 
@@ -106,7 +106,7 @@ If Playwright reports that its Chromium build is missing and you cannot download
 
 ## Micro Finance
 
-Micro Finance is a private, offline-first budgeting app built separately and hosted on its own address, because it keeps a person's whole budget in browser storage and its service worker would otherwise take over this site's pages. This site lists it under Calculators with all 17 of its modules and its limits (USD only, no sync, no bank connection, reminders only while the app runs, rollover for Needs and Wants only). The launch link appears once `NEXT_PUBLIC_MICRO_FINANCE_URL` is set at build time; until then the page says the app is not live yet. Hosting options, the tested header set, and the runbook are in [docs/micro-finance.md](docs/micro-finance.md).
+Micro Finance is a private, offline-first budgeting app built in its own repository. The built app is committed in `public/finance/`, so the normal deploy publishes it at `/finance/` with nothing extra to set up. This site lists it under Calculators with all 17 of its modules and its limits (USD only, no sync, no bank connection, reminders only while the app runs, rollover for Needs and Wants only), and its page says plainly that the app shares this site's address and therefore its browser storage. `node scripts/build-micro-finance.mjs` rebuilds the bundle from the app's repository. Moving it to an address of its own (recommended), refreshing it, and what was verified are in [docs/micro-finance.md](docs/micro-finance.md).
 
 ## Public social downloaders
 

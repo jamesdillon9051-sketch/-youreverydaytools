@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { externalAppUrl, tools } from "../../lib/catalog";
+import { microFinanceUrl, sharesSiteOrigin, tools } from "../../lib/catalog";
 import { mockAdsterra } from "./ad-fixture";
 
 test.beforeEach(async ({ page }) => mockAdsterra(page));
@@ -47,22 +47,19 @@ test("the Micro Finance page lists every module, the honest limits and its FAQ",
   for (const module of tool.modules!)
     await expect(modules).toContainText(module.description.slice(0, 60));
 
-  // The launcher: either the configured link, or an honest "not live yet".
+  // The launcher opens the bundled app (or the address that replaces it) and says where it is served from.
   const workspace = page.getByRole("region", {
     name: "Micro Finance workspace",
   });
-  const configured = externalAppUrl(process.env.NEXT_PUBLIC_MICRO_FINANCE_URL);
-  if (configured) {
-    const link = workspace.getByRole("link", { name: /Open Micro Finance/ });
-    await expect(link).toHaveAttribute("href", configured);
-    await expect(link).toHaveAttribute("target", "_blank");
-    await expect(link).toHaveAttribute("rel", "noopener noreferrer");
-  } else {
-    await expect(
-      workspace.getByText("Micro Finance is not live on this site yet."),
-    ).toBeVisible();
-    await expect(workspace.getByRole("link")).toHaveCount(0);
-  }
+  const link = workspace.getByRole("link", { name: /Open Micro Finance/ });
+  await expect(link).toHaveAttribute("href", microFinanceUrl);
+  await expect(link).toHaveAttribute("target", "_blank");
+  await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  await expect(workspace).toContainText(
+    sharesSiteOrigin(microFinanceUrl)
+      ? "opens from this site's own address"
+      : "opens at its own address",
+  );
 
   // Limits are stated where people look first, and again in the FAQ.
   for (const limit of [

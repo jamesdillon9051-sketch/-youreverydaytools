@@ -1,0 +1,75 @@
+{
+  "id": "/finance/",
+  "name": "Micro Finance",
+  "short_name": "Finance",
+  "description": "A private, offline-first budget: weekly limits, safe-to-spend, bills, savings vaults and insights.",
+  "start_url": "/finance/?source=pwa",
+  "scope": "/finance/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "finance",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/finance/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/finance/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/finance/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Log an expense",
+      "short_name": "Log expense",
+      "url": "/finance/?action=log",
+      "icons": [
+        {
+          "src": "/finance/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Weekly budget",
+      "short_name": "Budget",
+      "url": "/finance/?tab=budget",
+      "icons": [
+        {
+          "src": "/finance/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Bills",
+      "url": "/finance/?tab=bills",
+      "icons": [
+        {
+          "src": "/finance/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

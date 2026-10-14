@@ -3,7 +3,15 @@ import { test } from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MicroFinanceLauncher } from "../components/MicroFinanceLauncher";
-import { categories, externalAppUrl, tools } from "../lib/catalog";
+import {
+  categories,
+  externalAppUrl,
+  microFinancePath,
+  microFinanceUrl,
+  sharesSiteOrigin,
+  siteUrl,
+  tools,
+} from "../lib/catalog";
 
 const microFinance = tools.find((tool) => tool.slug === "micro-finance")!;
 const moduleNames = [
@@ -41,7 +49,7 @@ test("every tool has a unique slug, a real category, three features and three st
   }
 });
 
-test("Micro Finance is listed with the agreed summary and a launcher, not an embedded app", () => {
+test("Micro Finance is listed with the agreed summary and a launcher page for the bundled app", () => {
   assert.equal(microFinance.category, "calculators");
   assert.equal(microFinance.name, "Micro Finance");
   assert.equal(
@@ -78,7 +86,7 @@ test("all 17 modules are listed in the agreed order, each explained", () => {
 test("the listing states every limit honestly, in the FAQ and in the launcher", () => {
   const faq = microFinance.faq.map((item) => item.answer).join(" ");
   const launcher = renderToStaticMarkup(
-    createElement(MicroFinanceLauncher, { url: "" }),
+    createElement(MicroFinanceLauncher, { url: microFinancePath }),
   );
   const limits: [string, RegExp][] = [
     ["USD only", /US dollars \(USD\)/],
@@ -120,27 +128,55 @@ test("the app link accepts only plain https addresses", () => {
     assert.equal(externalAppUrl(rejected), "", String(rejected));
 });
 
-test("the launcher links out safely when configured and never invents a link when not", () => {
-  const live = renderToStaticMarkup(
+test("the launch link is the bundled app unless an https address replaces it", () => {
+  assert.equal(microFinancePath, "/finance/");
+  assert.equal(
+    microFinanceUrl,
+    externalAppUrl(process.env.NEXT_PUBLIC_MICRO_FINANCE_URL) ||
+      microFinancePath,
+  );
+  assert.equal(sharesSiteOrigin(microFinancePath), true);
+  assert.equal(sharesSiteOrigin(`${siteUrl}/finance/`), true);
+  assert.equal(sharesSiteOrigin("https://finance.example.com/"), false);
+  assert.equal(sharesSiteOrigin("not a url"), false);
+});
+
+test("the launcher opens the app safely and is honest about where it is served from", () => {
+  const bundled = renderToStaticMarkup(
+    createElement(MicroFinanceLauncher, { url: microFinancePath }),
+  );
+  assert.match(bundled, /href="\/finance\/"/);
+  assert.match(bundled, /target="_blank"/);
+  assert.match(bundled, /rel="noopener noreferrer"/);
+  assert.match(bundled, /Open Micro Finance/);
+  // On this site's own address the app shares browser storage with the site's scripts, and the page says so.
+  assert.match(bundled, /opens from this site(?:&#x27;|')s own address/);
+  assert.match(bundled, /analytics and ads\) share the browser storage/);
+  assert.doesNotMatch(bundled, /stays apart from this site/);
+  assert.doesNotMatch(bundled, /not live/);
+
+  const separate = renderToStaticMarkup(
     createElement(MicroFinanceLauncher, {
       url: "https://finance.example.com/",
     }),
   );
-  assert.match(live, /href="https:\/\/finance\.example\.com\/"/);
-  assert.match(live, /target="_blank"/);
-  assert.match(live, /rel="noopener noreferrer"/);
-  assert.match(live, /Open Micro Finance/);
-  assert.doesNotMatch(live, /not live on this site yet/);
-
-  const pending = renderToStaticMarkup(
-    createElement(MicroFinanceLauncher, { url: "" }),
+  assert.match(separate, /href="https:\/\/finance\.example\.com\/"/);
+  assert.match(separate, /separate app that opens at its own address/);
+  assert.match(
+    separate,
+    /stays apart from this site, its ads and its analytics/,
   );
-  assert.match(pending, /Micro Finance is not live on this site yet/);
-  assert.doesNotMatch(pending, /Open Micro Finance/);
-  assert.doesNotMatch(pending, /<a /);
-  // Either way it explains why the app is separate and how to install it.
-  for (const html of [live, pending]) {
-    assert.match(html, /separate app/);
+  assert.doesNotMatch(separate, /share the browser storage/);
+
+  for (const html of [bundled, separate])
     assert.match(html, /Add to Home Screen/);
-  }
+});
+
+test("the privacy FAQ matches where the app is served from", () => {
+  const answer = microFinance.faq[0].answer;
+  assert.match(answer, /never sends your budget anywhere/);
+  if (sharesSiteOrigin(microFinanceUrl))
+    assert.match(answer, /scripts that run on the site's other pages/);
+  else
+    assert.doesNotMatch(answer, /scripts that run on the site's other pages/);
 });
