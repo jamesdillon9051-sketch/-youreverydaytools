@@ -1,6 +1,6 @@
 # LocalTools
 
-A complete Next.js App Router and Tailwind CSS utility suite. The original 15 utilities process inputs in the browser. Nine social downloaders use a standalone PHP gateway on Hostinger shared hosting with external provider APIs. The frontend remains a Next.js static export, with no Node.js runtime or database on Hostinger.
+A complete Next.js App Router and Tailwind CSS utility suite. The original 15 utilities process inputs in the browser. Nine social downloaders use a standalone PHP gateway on Hostinger shared hosting with external provider APIs. The frontend remains a Next.js static export, with no Node.js runtime or database on Hostinger. Micro Finance, a separately hosted offline budgeting app, is listed alongside the calculators; see [Micro Finance](docs/micro-finance.md).
 
 ## Start locally
 
@@ -46,7 +46,7 @@ Do not upload the source ZIP into `public_html`. Source code, `node_modules`, an
 ## Included pages
 
 - Homepage and six category landing pages.
-- Twenty-four dedicated tool pages (fifteen browser utilities and nine social downloaders) with canonical metadata, OpenGraph PNG cards, SoftwareApplication, HowTo, FAQ JSON-LD, instructions, and related-tool links.
+- Twenty-five dedicated tool pages (fifteen browser utilities, nine social downloaders, and the Micro Finance launch page) with canonical metadata, OpenGraph PNG cards, SoftwareApplication, HowTo, FAQ JSON-LD, instructions, and related-tool links.
 - About Us (`/about/`) and Privacy Policy (`/privacy-policy/`), linked in the footer and sitemap.
 - Static `robots.txt`, `sitemap.xml`, and custom 404.
 
@@ -103,6 +103,10 @@ Calculation tests cover page ranges, known growth values, amortization invariant
 If Playwright reports that its Chromium build is missing and you cannot download one, point a local, uncommitted config at an installed browser with `launchOptions: { executablePath: "/path/to/chromium" }`.
 
 `pdf-lib`, `pdfjs-dist`, `browser-image-compression`, `qrcode`, and `lucide-react` are included as requested. PDF manipulation uses `pdf-lib`; the provided tools do not load PDF.js because they do not rasterize PDF pages. Heavy processing libraries load only when their tool needs them.
+
+## Micro Finance
+
+Micro Finance is a private, offline-first budgeting app built separately and hosted on its own address, because it keeps a person's whole budget in browser storage and its service worker would otherwise take over this site's pages. This site lists it under Calculators with all 17 of its modules and its limits (USD only, no sync, no bank connection, reminders only while the app runs, rollover for Needs and Wants only). The launch link appears once `NEXT_PUBLIC_MICRO_FINANCE_URL` is set at build time; until then the page says the app is not live yet. Hosting options, the tested header set, and the runbook are in [docs/micro-finance.md](docs/micro-finance.md).
 
 ## Public social downloaders
 

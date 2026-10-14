@@ -1,7 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { microFinanceUrl } from "@/lib/catalog";
 import { isSocialSlug } from "@/lib/social";
+import { MicroFinanceLauncher } from "./MicroFinanceLauncher";
 import { ToolErrorBoundary } from "./ToolErrorBoundary";
 
 const loading = () => (
@@ -47,6 +49,8 @@ function Tool({ slug }: { slug: string }) {
   if (["compound-interest", "mortgage-payoff", "freelance-rate"].includes(slug))
     return <CalculatorTools mode={slug} />;
   if (isSocialSlug(slug)) return <SocialTools mode={slug} />;
+  if (slug === "micro-finance")
+    return <MicroFinanceLauncher url={microFinanceUrl} />;
   return <GeneratorTools mode={slug} />;
 }
 
