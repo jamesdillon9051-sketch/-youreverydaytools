@@ -1,5 +1,7 @@
 <?php
  declare(strict_types=1);
+ // Notices or warnings printed into the response would corrupt the JSON and can reveal server paths.
+ @ini_set('display_errors', '0');
  define('LOCALTOOLS_SOCIAL', true);
  require __DIR__ . '/social-lib.php';
  try {
@@ -10,9 +12,7 @@
      }
      if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Allow: GET, POST'); throw new SocialError('Method not allowed.',405); }
      if (strtolower(explode(';', $_SERVER['CONTENT_TYPE'] ?? '')[0]) !== 'application/json') throw new SocialError('Send a JSON request.',415);
-     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-     if ($origin !== '' && parse_url($origin, PHP_URL_HOST) !== explode(':', $_SERVER['HTTP_HOST'] ?? '')[0]) throw new SocialError('Use the download form on this website.',403);
-     if (($_SERVER['HTTP_SEC_FETCH_SITE'] ?? 'same-origin') === 'cross-site') throw new SocialError('Use the download form on this website.',403);
+     social_require_same_origin();
      $raw = file_get_contents('php://input', false, null, 0, 4097);
      if ($raw === false || strlen($raw) > 4096) throw new SocialError('The request is too large.',413);
      $body = json_decode($raw,true);

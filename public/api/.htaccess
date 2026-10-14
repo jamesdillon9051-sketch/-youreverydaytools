@@ -2,6 +2,10 @@ Options -Indexes
 <Files "social-lib.php">
   Require all denied
 </Files>
+# Shared hosts often write PHP's error_log next to the failing script.
+<FilesMatch "^(error_log|.*\.log)$">
+  Require all denied
+</FilesMatch>
 <IfModule mod_headers.c>
   Header always set Cache-Control "no-store"
   Header always set X-Content-Type-Options "nosniff"

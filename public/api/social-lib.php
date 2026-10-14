@@ -17,7 +17,8 @@
          'rocketapi_key' => getenv('ROCKETAPI_KEY') ?: '',
          'signing_key' => getenv('SOCIAL_SIGNING_KEY') ?: '',
          'storage_dir' => $privateRoot . '/localtools-social-cache',
-         'hourly_requests' => 10, 'daily_requests' => 500, 'max_download_bytes' => 128 * 1024 * 1024,
+         'hourly_requests' => 10, 'daily_requests' => 500, 'hourly_downloads' => 80, 'max_download_bytes' => 128 * 1024 * 1024,
+         'client_ip_header' => '',
      ], $config);
  }
  function social_json(array $body, int $status = 200): never {
@@ -47,24 +48,45 @@
      if (!in_array($payload['kind'] ?? '', ['photo', 'video'], true)) throw new SocialError('Invalid media type.');
      return $payload;
  }
+ function social_client_ip(array $config): string {
+     // Behind a CDN or proxy REMOTE_ADDR is the proxy, so every visitor would share one
+     // rate-limit bucket. Honor a header only when the operator names one their proxy overwrites.
+     $header = (string)($config['client_ip_header'] ?? '');
+     if ($header !== '' && preg_match('/^[A-Za-z0-9-]{1,64}$/D', $header)) {
+         $value = trim(explode(',', (string)($_SERVER['HTTP_' . strtoupper(str_replace('-', '_', $header))] ?? ''))[0]);
+         if (filter_var($value, FILTER_VALIDATE_IP) !== false) return $value;
+     }
+     return (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+ }
+ function social_require_same_origin(): void {
+     $origin = (string)($_SERVER['HTTP_ORIGIN'] ?? '');
+     if ($origin !== '') {
+         $originHost = strtolower((string)parse_url($origin, PHP_URL_HOST));
+         $host = strtolower((string)preg_replace('/:\d+$/', '', (string)($_SERVER['HTTP_HOST'] ?? '')));
+         if ($originHost === '' || $originHost !== $host) throw new SocialError('Use the download form on this website.', 403);
+     }
+     if (($_SERVER['HTTP_SEC_FETCH_SITE'] ?? 'same-origin') === 'cross-site') throw new SocialError('Use the download form on this website.', 403);
+ }
  function social_rate(array $config, string $action): void {
      $directory = (string)$config['storage_dir'];
      if (!is_dir($directory) && !@mkdir($directory, 0700, true) && !is_dir($directory)) throw new SocialError('The download service cannot initialize private storage.', 503);
      $hour = gmdate('YmdH'); $day = gmdate('Ymd');
-     $ip = (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
-     $client = hash_hmac('sha256', $ip, social_key($config));
-     $file = fopen($directory . '/rate-' . $day . '.json', 'c+');
-     if ($file === false || !flock($file, LOCK_EX)) throw new SocialError('The download service is busy.', 503);
+     $client = hash_hmac('sha256', social_client_ip($config), social_key($config));
+     $file = @fopen($directory . '/rate-' . $day . '.json', 'c+');
+     if ($file === false) throw new SocialError('The download service is busy.', 503);
+     if (!flock($file, LOCK_EX)) { fclose($file); throw new SocialError('The download service is busy.', 503); }
      try {
          $state = json_decode(stream_get_contents($file) ?: '{}', true) ?: [];
+         // Counters from earlier hours can never match again; dropping them keeps the file small.
+         foreach (array_keys($state) as $key) if ($key !== 'total' && (explode(':', (string)$key)[1] ?? '') !== $hour) unset($state[$key]);
          $bucket = $action . ':' . $hour . ':' . $client;
-         $limit = $action === 'extract' ? (int)$config['hourly_requests'] : 80;
+         $limit = $action === 'extract' ? (int)$config['hourly_requests'] : (int)$config['hourly_downloads'];
          if (($state[$bucket] ?? 0) >= $limit || ($action === 'extract' && ($state['total'] ?? 0) >= (int)$config['daily_requests'])) throw new SocialError('The download service has reached its usage limit. Please try again later.', 429);
          $state[$bucket] = ($state[$bucket] ?? 0) + 1;
          if ($action === 'extract') $state['total'] = ($state['total'] ?? 0) + 1;
          rewind($file); ftruncate($file, 0); fwrite($file, json_encode($state)); fflush($file);
      } finally { flock($file, LOCK_UN); fclose($file); }
-     foreach (glob($directory . '/rate-*.json') ?: [] as $old) if (filemtime($old) < time() - 172800) @unlink($old);
+     if (random_int(1, 25) === 1) foreach (glob($directory . '/rate-*.json') ?: [] as $old) if (filemtime($old) < time() - 172800) @unlink($old);
  }
  function social_input(string $platform, string $mode, string $input): array {
      $hosts = ['tiktok' => ['tiktok.com'], 'instagram' => ['instagram.com'], 'twitter' => ['x.com','twitter.com'], 'facebook' => ['facebook.com','fb.watch'], 'pinterest' => ['pinterest.com','pin.it'], 'reddit' => ['reddit.com','redd.it']];
@@ -72,7 +94,7 @@
      if (($mode === 'stories' || $mode === 'highlights') && $platform !== 'instagram') throw new SocialError('Stories and highlights are supported for Instagram only.');
      if ($mode === 'profile' && !in_array($platform, ['instagram','tiktok','twitter'], true)) throw new SocialError('Choose Instagram, TikTok, or X for profile pictures.');
      $input = trim($input);
-     if (strlen($input) > 2048 || $input === '') throw new SocialError('Enter a public link or username.');
+     if (strlen($input) > 2048 || $input === '' || preg_match('/[\x00-\x1f\x7f]/', $input)) throw new SocialError('Enter a public link or username.');
      if ($mode !== 'post' && preg_match('/^@?([a-zA-Z0-9_.]{1,64})$/D', $input, $m)) return ['handle' => $m[1], 'url' => '', 'highlight' => ''];
      $parts = parse_url($input);
      if (!$parts || ($parts['scheme'] ?? '') !== 'https' || isset($parts['user']) || isset($parts['pass']) || isset($parts['port'])) throw new SocialError('Use a complete public HTTPS link.');
@@ -89,11 +111,14 @@
      return ['handle' => $handle, 'url' => preg_replace('/#.*$/', '', $input), 'highlight' => $highlight];
  }
  function social_media_url(string $url): string {
-     $parts = parse_url(html_entity_decode($url, ENT_QUOTES | ENT_HTML5));
-     if (!$parts || strlen($url) > 8192 || ($parts['scheme'] ?? '') !== 'https' || isset($parts['user']) || isset($parts['pass']) || isset($parts['port']) || preg_match('/[\x00-\x20\x7f]/', $url)) throw new SocialError('The provider returned an unsupported media address.', 502);
+     // Providers HTML-escape query strings. Validate exactly the string that is returned and
+     // later requested: checking the raw text let entities such as &#x0A; decode into control characters.
+     $decoded = html_entity_decode($url, ENT_QUOTES | ENT_HTML5);
+     $parts = parse_url($decoded);
+     if (!$parts || strlen($decoded) > 8192 || ($parts['scheme'] ?? '') !== 'https' || isset($parts['user']) || isset($parts['pass']) || isset($parts['port']) || preg_match('/[\x00-\x20\x7f\\\\]/', $decoded)) throw new SocialError('The provider returned an unsupported media address.', 502);
      $host = strtolower($parts['host'] ?? '');
      $domains = ['cdninstagram.com','fbcdn.net','tiktokcdn.com','tiktokcdn-us.com','tiktokcdn-eu.com','tiktokv.com','tiktokv.us','tiktok.com','ibytedtos.com','byteoversea.com','muscdn.com','musical.ly','twimg.com','pinimg.com','redd.it','redditmedia.com'];
-     foreach ($domains as $domain) if ($host === $domain || str_ends_with($host, '.' . $domain)) return html_entity_decode($url, ENT_QUOTES | ENT_HTML5);
+     foreach ($domains as $domain) if ($host === $domain || str_ends_with($host, '.' . $domain)) return $decoded;
      throw new SocialError('The provider returned an unsupported media host.', 502);
  }
  function social_public_ip(string $ip): bool {
