@@ -14,8 +14,9 @@ self.onmessage = function (event) {
       if (matches.length >= 1000) break;
       if (match[0].length === 0) {
         const code = input.codePointAt(regex.lastIndex);
+        const unicode = regex.unicode || regex.unicodeSets;
         regex.lastIndex +=
-          regex.unicode && code !== undefined && code > 65535 ? 2 : 1;
+          unicode && code !== undefined && code > 65535 ? 2 : 1;
       }
     }
     self.postMessage({ matches, error: "", limited: matches.length >= 1000 });
