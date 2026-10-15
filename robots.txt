@@ -1,5 +1,5 @@
 User-Agent: *
 Allow: /
 
-Host: https://youreverydaytools.weeklydelight.com
-Sitemap: https://youreverydaytools.weeklydelight.com/sitemap.xml
+Host: https://tools.weeklydelight.com
+Sitemap: https://tools.weeklydelight.com/sitemap.xml
