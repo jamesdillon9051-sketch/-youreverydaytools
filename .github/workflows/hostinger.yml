@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  NEXT_PUBLIC_SITE_URL: https://youreverydaytools.weeklydelight.com
+  NEXT_PUBLIC_SITE_URL: https://tools.weeklydelight.com
   NEXT_TELEMETRY_DISABLED: "1"
 
 jobs:
@@ -128,7 +128,7 @@ jobs:
     timeout-minutes: 20
     environment:
       name: production
-      url: https://youreverydaytools.weeklydelight.com
+      url: https://tools.weeklydelight.com
     steps:
       - name: Check out deployment script
         uses: actions/checkout@v4

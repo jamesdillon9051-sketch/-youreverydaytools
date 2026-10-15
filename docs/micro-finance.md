@@ -14,7 +14,7 @@ Micro Finance is a private, offline-first budgeting app that was built separatel
 
 ## Deploying
 
-Nothing extra. Merge to `main`; the existing workflow builds the site, `public/finance/` is part of the export, and it is published to the `hostinger` branch (or uploaded over FTPS) with everything else, including the two small `.htaccess` files. Then open `https://youreverydaytools.weeklydelight.com/finance/`. The website's deploy never builds the app, so a problem in the app's repository cannot stop a deploy.
+Nothing extra. Merge to `main`; the existing workflow builds the site, `public/finance/` is part of the export, and it is published to the `hostinger` branch (or uploaded over FTPS) with everything else, including the two small `.htaccess` files. Then open `https://tools.weeklydelight.com/finance/`. The website's deploy never builds the app, so a problem in the app's repository cannot stop a deploy.
 
 ## One thing to know: it shares this site's address
 

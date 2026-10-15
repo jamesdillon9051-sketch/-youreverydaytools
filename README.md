@@ -18,10 +18,10 @@ Open http://localhost:3000. The appearance follows your system preference on fir
 Set the actual HTTPS domain before building so canonical URLs, sitemap entries, social image URLs, and robots.txt point to the live site:
 
 ```sh
-NEXT_PUBLIC_SITE_URL=https://youreverydaytools.weeklydelight.com npm run build
+NEXT_PUBLIC_SITE_URL=https://tools.weeklydelight.com npm run build
 ```
 
-Alternatively create `.env.local` with `NEXT_PUBLIC_SITE_URL` set to your domain, then run `npm run build`. This source defaults to `https://youreverydaytools.weeklydelight.com`, your supplied Hostinger domain. Set the variable to override that address when moving to another domain.
+Alternatively create `.env.local` with `NEXT_PUBLIC_SITE_URL` set to your domain, then run `npm run build`. This source defaults to `https://tools.weeklydelight.com`, your supplied Hostinger domain. Set the variable to override that address when moving to another domain.
 
 The generated `out/` folder is the complete website. `npm run start` serves that folder locally. For social downloaders, serve `out/` on PHP-enabled hosting; the local static server cannot execute PHP. The build uses webpack for compatibility with restricted build environments.
 

@@ -1,6 +1,5 @@
 export const siteUrl = (
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://youreverydaytools.weeklydelight.com"
+  process.env.NEXT_PUBLIC_SITE_URL || "https://tools.weeklydelight.com"
 ).replace(/\/$/, "");
 /**
  * Accept only a plain https address, so a mistyped or hostile build setting can

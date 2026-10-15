@@ -1,6 +1,6 @@
 # GitHub → Hostinger automatic deployment
 
-Website: **https://youreverydaytools.weeklydelight.com**
+Website: **https://tools.weeklydelight.com**
 
 Repository: **https://github.com/jamesdillon9051-sketch/-youreverydaytools**
 
@@ -11,7 +11,7 @@ Use **main** to edit the source and **hostinger** to deploy the compiled website
 1. Wait for **Actions → Build and deploy to Hostinger** to finish its **Update compiled website branch for Hostinger Git** job. It creates or updates the `hostinger` branch with `index.html`, `_next/`, `tools/`, `.htaccess`, and the other built files directly at its root.
 2. In this subdomain's **Hostinger hPanel → Git** deployment settings, use the same repository URL and change the branch from `main` to **hostinger**.
 3. Deploy into this subdomain's actual document root. When the Git deployment screen already targets that document root, leave its extra directory field empty. Do not append `out/` or create a nested project folder.
-4. Click **Deploy**. Check File Manager: `index.html` and `_next/` must be directly inside the folder served by `youreverydaytools.weeklydelight.com`.
+4. Click **Deploy**. Check File Manager: `index.html` and `_next/` must be directly inside the folder served by `tools.weeklydelight.com`.
 5. Open the homepage, a tool page, `/sitemap.xml`, and `/robots.txt`. If `/index.html` returns 404, the built files have not reached the directory serving this subdomain. If that file exists but is forbidden, check file/folder permissions and the hosting access rules.
 
 Future edits go to `main`. GitHub tests and builds them, then commits the generated website to `hostinger`. Click Deploy after that branch updates, or enable Hostinger's automatic Git deployment and configure its webhook for pushes to this repository. No FTP secrets are needed for the hPanel Git route. Do not edit generated files directly on `hostinger`; the next successful build replaces them.
