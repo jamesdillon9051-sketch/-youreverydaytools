@@ -47,6 +47,7 @@ test("all page types initialize analytics and render one native and rectangular 
     ).toEqual([
       ["js", true],
       ["config", "G-8SNLQK3R0B"],
+      ["config", "G-9QK6B1XMN1"],
     ]);
     await expect(
       page.locator("#container-e4020df4957732c0eb03cdcb6d36d610"),
@@ -117,7 +118,7 @@ test("shared scripts persist through navigation and ads fit a 320px screen", asy
           (item) => item[0] === "config",
         ).length,
     ),
-  ).toBe(1);
+  ).toBe(2); // one per analytics property, never repeated
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
