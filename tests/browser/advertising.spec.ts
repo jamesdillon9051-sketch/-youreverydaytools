@@ -50,10 +50,10 @@ test("all page types initialize analytics and render one native and rectangular 
       ["config", "G-9QK6B1XMN1"],
     ]);
     await expect(
-      page.locator("#container-e4020df4957732c0eb03cdcb6d36d610"),
+      page.locator("#container-0e88314fb17fa625db79032082c11e5b"),
     ).toHaveCount(1);
     await expect(
-      page.locator("#container-e4020df4957732c0eb03cdcb6d36d610"),
+      page.locator("#container-0e88314fb17fa625db79032082c11e5b"),
     ).toHaveText("Test native ad");
     await expect(page.locator("body")).toHaveAttribute(
       "data-social-bar-ready",
@@ -81,7 +81,7 @@ test("shared scripts persist through navigation and ads fit a 320px screen", asy
   await page.setViewportSize({ width: 320, height: 720 });
   await page.goto("/");
   await expect(
-    page.locator("#container-e4020df4957732c0eb03cdcb6d36d610"),
+    page.locator("#container-0e88314fb17fa625db79032082c11e5b"),
   ).toHaveText("Test native ad");
   await page.getByRole("combobox", { name: "Search tools" }).fill("password");
   await page.getByRole("option", { name: "Password generator" }).click();
@@ -95,7 +95,7 @@ test("shared scripts persist through navigation and ads fit a 320px screen", asy
     .click();
   await expect(page.locator("h1")).toHaveText("Privacy Policy");
   await expect(
-    page.locator("#container-e4020df4957732c0eb03cdcb6d36d610"),
+    page.locator("#container-0e88314fb17fa625db79032082c11e5b"),
   ).toHaveText("Test native ad");
   await expect(
     page.locator('iframe[title="Adsterra 300 by 250 advertisement"]'),

@@ -19,19 +19,19 @@ export function AdsterraAds() {
           <p className="mb-3 text-center text-[10px] font-medium uppercase tracking-[.18em] text-slate-400">
             Advertisement
           </p>
-          <div id="container-e4020df4957732c0eb03cdcb6d36d610" />
+          <div id="container-0e88314fb17fa625db79032082c11e5b" />
         </aside>
       </div>
       <Script
         id="adsterra-native-banner"
         async
         data-cfasync="false"
-        src="https://disembroildisembroildissipatespots.com/e4020df4957732c0eb03cdcb6d36d610/invoke.js"
+        src="https://disembroildisembroildissipatespots.com/0e88314fb17fa625db79032082c11e5b/invoke.js"
         strategy="afterInteractive"
       />
       <Script
         id="adsterra-social-bar"
-        src="https://disembroildisembroildissipatespots.com/d6/0a/7e/d60a7e3d71be26efd2845278ba8ebac6.js"
+        src="https://disembroildisembroildissipatespots.com/67/33/03/6733034dd0fa757f4485674ad089bfa7.js"
         strategy="afterInteractive"
       />
     </>
