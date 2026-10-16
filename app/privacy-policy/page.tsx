@@ -167,15 +167,15 @@ export default function PrivacyPolicy() {
             their own privacy policies.
           </p>
           <p className="muted mt-3">
-            We use Google Analytics 4, with measurement ID G-8SNLQK3R0B, to
-            understand website traffic and usage. The Google tag loads from
-            www.googletagmanager.com and sends analytics requests to Google.
-            Depending on the property settings, these requests include page
-            addresses and titles, referring pages, device and browser details,
-            approximate location, and interactions such as page views and
-            scrolling. Google Analytics may set cookies, including _ga cookies,
-            to distinguish visits. Google receives network information when your
-            browser contacts its services.
+            We use Google Analytics 4, with measurement IDs G-8SNLQK3R0B and
+            G-9QK6B1XMN1, to understand website traffic and usage. The Google
+            tag loads from www.googletagmanager.com and sends analytics requests
+            to Google. Depending on the property settings, these requests
+            include page addresses and titles, referring pages, device and
+            browser details, approximate location, and interactions such as page
+            views and scrolling. Google Analytics may set cookies, including _ga
+            cookies, to distinguish visits. Google receives network information
+            when your browser contacts its services.
           </p>
           <p className="muted mt-3">
             Our tools do not deliberately send selected files, text inputs,
